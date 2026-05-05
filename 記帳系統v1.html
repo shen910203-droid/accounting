@@ -142,8 +142,8 @@ textarea{resize:vertical;min-height:56px;}
 .modal-title{font-size:15px;font-weight:700;margin-bottom:18px;}
 .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
 
-/* PERSON CARDS */
-.person-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+/* PERSON CARDS - 平均分布 */
+.person-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
 .person-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
   padding:14px;text-align:center;}
 .person-card.pool-card{border-color:var(--accent);grid-column:1/-1;}
@@ -156,7 +156,9 @@ textarea{resize:vertical;min-height:56px;}
 
 /* ADVANCE PAGE */
 .adv-item{background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);
-  padding:11px 14px;display:grid;grid-template-columns:76px 1fr auto auto auto;gap:10px;align-items:center;}
+  padding:11px 14px;display:grid;
+  grid-template-columns:100px 1fr auto auto auto auto;
+  gap:8px;align-items:center;margin-bottom:6px;}
 .adv-item.settled{opacity:.45;}
 .status-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;}
 .status-badge.pending{background:rgba(247,200,106,.2);color:var(--yellow);}
@@ -737,7 +739,9 @@ textarea{resize:vertical;min-height:56px;}
     </div>
     <div class="fg">
       <label class="fl">墊款人（員工請款時）</label>
-      <input type="text" id="p-payer" placeholder="員工姓名">
+      <select id="p-payer">
+        <option value="">不適用</option>
+      </select>
     </div>
     <div class="fg">
       <label class="fl">回款方式</label>
@@ -1121,7 +1125,7 @@ function renderOverview(){
     {l:'信用卡未繳',v:fmt(totalCC),c:'red'},
     {l:'零用金餘額',v:fmt(petty),c:'orange'},
     {l:'餐費池（同事）',v:fmt(mealPool),c:'purple'},
-    {l:'⑦ 我實際擁有',v:fmt(myReal),c:myReal>=0?'green':'red'},
+    {l:'實際擁有',v:fmt(myReal),c:myReal>=0?'green':'red'},
   ].map(s=>`<div class="stat ${s.c}"><div class="stat-label">${s.l}</div><div class="stat-val ${s.c}">${s.v}</div></div>`).join('');
 
   document.getElementById('ov-cc').innerHTML=`<thead><tr><th>信用卡</th><th>未繳</th></tr></thead><tbody>`+
@@ -1563,12 +1567,15 @@ function renderMealList(){
     }
     else if(tx.type==='repay') detail=`${tx.repayWho} 提領（${tx.repayMethod}）`;
     else if(tx.type==='petty-in') detail=`零用金轉入 → ${tx.targetWho||''}`;
-    return`<div class="tx-row" style="grid-template-columns:90px 76px 70px 1fr auto auto;">
-      <span style="font-size:10px;font-family:var(--mono);color:var(--accent);">${tx.id||'—'}</span>
-      <span class="tx-date">${tx.date||''}</span>
-      <span style="color:${tColor[tx.type]};font-size:12px;">${tLabel[tx.type]||tx.type}</span>
-      <span style="font-size:12px;">${detail}${tx.desc?' <span class="text-muted">— '+tx.desc+'</span>':''}</span>
-      <span class="tx-amt" style="color:var(--t2);">$${Number(tx.amount||tx.payerTotal||0).toLocaleString()}</span>
+    return`<div class="tx-row" style="grid-template-columns:auto auto auto 1fr auto auto;padding:10px 14px;gap:10px;">
+      <span style="font-size:10px;font-family:var(--mono);color:var(--accent);white-space:nowrap;">${tx.id||'—'}</span>
+      <span class="tx-date" style="white-space:nowrap;">${tx.date||''}</span>
+      <span style="color:${tColor[tx.type]};font-size:11px;font-weight:600;white-space:nowrap;">${tLabel[tx.type]||tx.type}</span>
+      <div style="min-width:0;">
+        <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${detail}</div>
+        ${tx.desc?`<div style="font-size:12px;color:var(--t2);margin-top:3px;background:var(--s2);display:inline-block;padding:1px 7px;border-radius:4px;">📝 ${tx.desc}</div>`:''}
+      </div>
+      <span class="tx-amt" style="color:var(--t2);white-space:nowrap;">$${Number(tx.amount||tx.payerTotal||0).toLocaleString()}</span>
       <button class="tx-del" onclick="delMealTx(${ri})">×</button>
     </div>`;
   }).join('');
@@ -1894,24 +1901,39 @@ function renderPetty(){
   list.innerHTML=[...DB.pettyTxs].reverse().map((tx,i)=>{
     const ri=DB.pettyTxs.length-1-i;
     const isOut=!['in','fine'].includes(tx.type);
-    return`<div class="tx-row" style="grid-template-columns:90px 76px 80px 1fr auto auto auto;">
-      <span style="font-size:10px;font-family:var(--mono);color:var(--orange);">${tx.id||'—'}</span>
-      <span class="tx-date">${tx.date||''}</span>
-      <span style="font-size:11px;color:var(--t2);">${tl[tx.type]||tx.type}</span>
-      <span style="font-size:12px;">${tx.desc||''} ${tx.payer?'<span class="text-muted">（'+tx.payer+'）</span>':''} ${tx.note?'<span class="text-muted">'+tx.note+'</span>':''}</span>
-      <span class="tx-amt ${isOut?'out':'in'}">${isOut?'-':'+'}$${Number(tx.amount).toLocaleString()}</span>
-      <span class="text-muted" style="font-size:11px;">${tx.repay||''}</span>
-      <button class="tx-del" onclick="delPettyTx(${ri})">×</button>
+    const d=new Date(tx.date);
+    const mo=isNaN(d)?'':d.getMonth()+1;
+    const day=isNaN(d)?'':d.getDate();
+    return`<div class="tx-row" style="padding:10px 14px;">
+      <div style="display:grid;grid-template-columns:auto auto auto 1fr auto auto auto;gap:10px;align-items:center;">
+        <span style="font-size:10px;font-family:var(--mono);color:var(--orange);white-space:nowrap;">${tx.id||'—'}</span>
+        <span class="tx-date" style="white-space:nowrap;">${tx.date||''}</span>
+        <span style="font-size:11px;font-weight:600;color:var(--t2);white-space:nowrap;">${tl[tx.type]||tx.type}</span>
+        <div style="min-width:0;">
+          <div style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${tx.desc||''}
+            ${tx.payer?`<span style="color:var(--accent);font-size:11px;margin-left:6px;">（${tx.payer}）</span>`:''}
+          </div>
+          ${tx.note?`<div style="font-size:11px;color:var(--t3);margin-top:2px;">${tx.note}</div>`:''}
+        </div>
+        <span class="tx-amt ${isOut?'out':'in'}" style="white-space:nowrap;">${isOut?'-':'+'}$${Number(tx.amount).toLocaleString()}</span>
+        ${tx.repay?`<span style="font-size:11px;color:var(--accent2);white-space:nowrap;background:rgba(232,132,90,.15);padding:2px 7px;border-radius:4px;">${tx.repay}</span>`:'<span></span>'}
+        <button class="tx-del" onclick="delPettyTx(${ri})">×</button>
+      </div>
     </div>`;
   }).join('');
 }
 
 function openPettyModal(){
   const today=new Date().toISOString().slice(0,10);
-  ['p-date','p-desc','p-amt','p-payer','p-note'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el.tagName==='INPUT') el.value=id==='p-date'?today:'';
-  });
+  document.getElementById('p-date').value=today;
+  document.getElementById('p-desc').value='';
+  document.getElementById('p-amt').value='';
+  document.getElementById('p-note').value='';
+  // 填入人員選單
+  const payerSel=document.getElementById('p-payer');
+  payerSel.innerHTML=`<option value="">不適用</option>`+
+    [...DB.settings.persons,'申瑋'].map(p=>`<option value="${p}">${p}</option>`).join('');
   document.getElementById('modal-petty').classList.add('open');
 }
 
@@ -1939,6 +1961,8 @@ function delPettyTx(idx){
 function exportPettyReport(){
   const start=document.getElementById('pr-start').value;
   const end=document.getElementById('pr-end').value;
+
+  // 計算期初餘額
   let openBal=DB.settings.initPetty;
   DB.pettyTxs.forEach(tx=>{
     if(start&&tx.date<start){
@@ -1946,20 +1970,55 @@ function exportPettyReport(){
       else openBal-=Number(tx.amount);
     }
   });
+
   const filtered=DB.pettyTxs.filter(tx=>(!start||tx.date>=start)&&(!end||tx.date<=end));
   let bal=openBal;
-  const tl={in:'撥款','out-person':'員工請款','out-self':'自行支出',fine:'罰款繳入'};
-  let csv=`零用金報表 ${start} ～ ${end}\n期初餘額,,,${Math.round(openBal)}\n`;
-  csv+='日期,摘要,類型,收入,支出,餘額,墊款人,回款方式,備註\n';
+  let seq=0;
+
+  // 公版格式（Tab分隔，可直接貼到公司Excel）
+  // 格式：編號 | 月 | 日 | 摘要 | 收入 | 支出 | 餘額 | 墊款人 | 回款方式 | 備註
+  const rows=[];
+
+  // 標題
+  rows.push(['邦統貿易 - 零用金明細表','','','','','','','','','']);
+  rows.push(['編號','月','日','摘　　要','收　入','支　出','餘　額','墊款人','回款方式','備　註']);
+
+  // 期初行
+  rows.push(['','','','上期盈餘',openBal>0?openBal:'','',openBal,'','','']);
+
   filtered.forEach(tx=>{
     const isOut=!['in','fine'].includes(tx.type);
-    if(isOut)bal-=Number(tx.amount); else bal+=Number(tx.amount);
-    csv+=`${tx.date},"${tx.desc||''}","${tl[tx.type]||tx.type}",${isOut?'':tx.amount},${isOut?tx.amount:''},${Math.round(bal)},"${tx.payer||''}","${tx.repay||''}","${tx.note||''}"\n`;
+    if(isOut) bal-=Number(tx.amount); else bal+=Number(tx.amount);
+    const d=new Date(tx.date+'T00:00:00');
+    const mo=isNaN(d.getTime())?'':d.getMonth()+1;
+    const day=isNaN(d.getTime())?'':d.getDate();
+
+    if(tx.type==='in'){
+      rows.push(['','','','零用金入帳',tx.amount,'',Math.round(bal),'','','']);
+    } else if(tx.type==='fine'){
+      rows.push(['','',mo,day,tx.desc||'罰款',tx.amount,'',Math.round(bal),tx.payer||'','','']);
+    } else {
+      seq++;
+      rows.push([
+        seq, mo, day,
+        tx.desc||'',
+        '', // 支出無收入
+        tx.amount,
+        Math.round(bal),
+        tx.payer||'',
+        tx.repay||'',
+        tx.note||''
+      ]);
+    }
   });
+
+  // 合計行
   const tIn=filtered.filter(t=>['in','fine'].includes(t.type)).reduce((a,t)=>a+Number(t.amount),0);
   const tOut=filtered.filter(t=>!['in','fine'].includes(t.type)).reduce((a,t)=>a+Number(t.amount),0);
-  csv+=`\n期間收入合計,,,${tIn}\n期間支出合計,,,,${tOut}\n期末餘額,,,${Math.round(bal)}\n`;
-  downloadFile(`零用金報表_${start}_${end}.csv`,csv,'text/csv');
+  rows.push(['合計','','','',tIn,tOut,Math.round(bal),'','','']);
+
+  const tsv=rows.map(r=>r.join('\t')).join('\n');
+  downloadFile(`零用金報表_${start}_${end}.xls`, '\ufeff'+tsv, 'application/vnd.ms-excel');
 }
 
 // ════════════════════════════════════════════════════
@@ -2086,14 +2145,14 @@ function renderSettings(){
       <div class="row"><input type="text" id="new-person" placeholder="新增同事" style="width:200px;"><button class="btn btn-primary" onclick="addPerson()">新增</button></div></div>
     <div class="div"></div>
     <div><h3 style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">💰 初始餘額</h3>
-      ${s.banks.map(b=>`<div class="row mb8"><span style="width:150px;font-size:13px;">${b}</span>
-        <input type="number" id="ib-${b.replace(/[^a-zA-Z0-9]/g,'_')}" value="${s.initBanks[b]||0}" style="width:120px;"></div>`).join('')}
+      ${s.banks.map((b,i)=>`<div class="row mb8"><span style="width:150px;font-size:13px;">${b}</span>
+        <input type="number" id="ib-bank-${i}" value="${s.initBanks[b]||0}" style="width:120px;"></div>`).join('')}
       <div class="row mb8"><span style="width:150px;font-size:13px;">現金</span><input type="number" id="ib-cash" value="${s.initCash}" style="width:120px;"></div>
       <div class="row mb8"><span style="width:150px;font-size:13px;">零用金初始</span><input type="number" id="ib-petty" value="${s.initPetty}" style="width:120px;"></div>
       <div class="div"></div>
       <div style="font-size:12px;color:var(--t3);margin-bottom:8px;">信用卡初始未繳</div>
-      ${s.creditCards.map(c=>`<div class="row mb8"><span style="width:150px;font-size:13px;">${c}</span>
-        <input type="number" id="ic-${c.replace(/[^a-zA-Z0-9]/g,'_')}" value="${s.initCC[c]||0}" style="width:120px;"></div>`).join('')}
+      ${s.creditCards.map((c,i)=>`<div class="row mb8"><span style="width:150px;font-size:13px;">${c}</span>
+        <input type="number" id="ib-cc-${i}" value="${s.initCC[c]||0}" style="width:120px;"></div>`).join('')}
       <div class="mt12">
         <button class="btn btn-primary" onclick="confirmInitBalances()" style="width:100%;">✅ 確認更新初始餘額</button>
         <div class="text-muted mt8">填完後按確認才會儲存並更新總覽</div>
@@ -2109,16 +2168,16 @@ function renderSettings(){
 
 function confirmInitBalances(){
   const s=DB.settings;
-  s.banks.forEach(b=>{
-    const el=document.getElementById('ib-'+b.replace(/[^a-zA-Z0-9]/g,'_'));
+  s.banks.forEach((b,i)=>{
+    const el=document.getElementById('ib-bank-'+i);
     if(el) s.initBanks[b]=Number(el.value)||0;
   });
   const cash=document.getElementById('ib-cash');
   if(cash) s.initCash=Number(cash.value)||0;
   const petty=document.getElementById('ib-petty');
   if(petty) s.initPetty=Number(petty.value)||0;
-  s.creditCards.forEach(c=>{
-    const el=document.getElementById('ic-'+c.replace(/[^a-zA-Z0-9]/g,'_'));
+  s.creditCards.forEach((c,i)=>{
+    const el=document.getElementById('ib-cc-'+i);
     if(el) s.initCC[c]=Number(el.value)||0;
   });
   save();
