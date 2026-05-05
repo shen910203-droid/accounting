@@ -785,6 +785,13 @@ textarea{resize:vertical;min-height:56px;}
 </div>
 
 <script>
+window.onerror=function(msg,src,line,col,err){
+  document.body.innerHTML='<div style="padding:20px;color:red;font-family:monospace;background:#1a1a1a;min-height:100vh;">'+
+    '<h2>JS錯誤</h2><p>訊息: '+msg+'</p><p>行號: '+line+'</p><p>詳細: '+(err?err.stack:'')+'</p></div>';
+  return true;
+};
+</script>
+<script>
 // ════════════════════════════════════════════════════
 //  DEFAULT DATA
 // ════════════════════════════════════════════════════
