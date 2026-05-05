@@ -490,9 +490,9 @@ textarea{resize:vertical;min-height:56px;}
       <input type="text" id="tx-note" placeholder="選填">
     </div>
     <div class="fg full" id="tx-stat-group">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-        <input type="checkbox" id="tx-count-stat" checked style="accent-color:var(--accent);">
-        計入個人支出統計
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--t2);white-space:nowrap;">
+        <input type="checkbox" id="tx-count-stat" checked style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;">
+        <span>計入個人支出統計</span>
       </label>
     </div>
   </div>
@@ -531,12 +531,10 @@ textarea{resize:vertical;min-height:56px;}
   <!-- 同事餐費（附加選項） -->
   <div id="tx-meal-addon" style="display:none;">
     <div class="div"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
-        <input type="checkbox" id="tx-meal-check" onchange="onTxMealCheck()" style="accent-color:var(--green);">
-        同時加入同事餐費
-      </label>
-    </div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px;">
+      <input type="checkbox" id="tx-meal-check" onchange="onTxMealCheck()" style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0;">
+      <span>同時加入同事餐費</span>
+    </label>
     <div id="tx-meal-rows" style="display:none;"></div>
     <button type="button" id="tx-meal-add-btn" onclick="addTxMealRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增人員</button>
   </div>
@@ -544,9 +542,9 @@ textarea{resize:vertical;min-height:56px;}
   <!-- 代墊（附加選項） -->
   <div id="tx-adv-addon" style="display:none;">
     <div class="div"></div>
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
-      <input type="checkbox" id="tx-adv-check" onchange="onTxAdvCheck()" style="accent-color:var(--yellow);">
-      部分金額為代墊（等對方還）
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--yellow);">
+      <input type="checkbox" id="tx-adv-check" onchange="onTxAdvCheck()" style="accent-color:var(--yellow);width:16px;height:16px;flex-shrink:0;">
+      <span>部分金額為代墊（等對方還）</span>
     </label>
     <div id="tx-adv-rows" style="display:none;margin-top:8px;"></div>
     <button type="button" id="tx-adv-add-btn" onclick="addTxAdvRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增代墊對象</button>
