@@ -994,7 +994,7 @@ function computeAll(){
         else if(banks[tx.inBank]!==undefined) banks[tx.inBank]+=a;
       }
     } else if(tx.type==='pool-only'){
-      petty+=a; // 只計入池，不影響銀行
+      petty+=a; // 僅計入零用金池，不影響銀行（初始設定用）
     } else {
       petty-=a;
       // 支出從指定帳戶扣
@@ -1882,7 +1882,7 @@ function renderPetty(){
   let totalOut=0;
   DB.pettyTxs.forEach(tx=>{
     const a=Number(tx.amount)||0;
-    if(['in','fine'].includes(tx.type))bal+=a; else{bal-=a;totalOut+=a;}
+    if(['in','fine','pool-only'].includes(tx.type))bal+=a; else{bal-=a;totalOut+=a;}
   });
   // 零用金轉餐費也算支出
   DB.mealTxs.filter(t=>t.type==='petty-in').forEach(tx=>{bal-=Number(tx.amount)||0;totalOut+=Number(tx.amount)||0;});
@@ -1897,12 +1897,12 @@ function renderPetty(){
   if(!document.getElementById('pr-start').value) document.getElementById('pr-start').value=yrMo+'-01';
   if(!document.getElementById('pr-end').value) document.getElementById('pr-end').value=now;
 
-  const tl={in:'撥款','out-person':'員工請款','out-self':'自行支出',fine:'罰款繳入'};
+  const tl={in:'撥款','out-person':'員工請款','out-self':'自行支出',fine:'罰款繳入','pool-only':'初始設定（僅計入池）'};
   const list=document.getElementById('petty-list');
   if(!DB.pettyTxs.length){list.innerHTML='<div class="empty">尚無零用金記錄</div>';return;}
   list.innerHTML=[...DB.pettyTxs].reverse().map((tx,i)=>{
     const ri=DB.pettyTxs.length-1-i;
-    const isOut=!['in','fine'].includes(tx.type);
+    const isOut=!['in','fine','pool-only'].includes(tx.type);
     const d=new Date(tx.date);
     const mo=isNaN(d)?'':d.getMonth()+1;
     const day=isNaN(d)?'':d.getDate();
@@ -2263,9 +2263,3 @@ function downloadFile(name,content,type){
   a.href=URL.createObjectURL(new Blob([content],{type}));
   a.download=name;a.click();
 }
-
-// ── INIT ──
-loadFromCloud();
-</script>
-</body>
-</html>
