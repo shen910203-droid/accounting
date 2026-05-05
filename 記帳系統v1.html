@@ -835,6 +835,10 @@ async function loadFromCloud() {
     showSyncStatus('離線模式', 'warn');
   }
   renderOverview();
+  // 初始化 modal 點外關閉
+  document.querySelectorAll('.modal-overlay').forEach(m=>{
+    m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
+  });
 }
 
 // ── 儲存（同時做滾動備份）──
@@ -2252,11 +2256,4 @@ function toggleSection(bodyId,cbId){
   const body=document.getElementById(bodyId);
   const cb=document.getElementById(cbId);
   const open=cb.checked;
-  body.classList.toggle('open',open);
-}
-
-function toggleNavMenu(){
-  const menu=document.getElementById('nav-menu');
-  menu.style.display=menu.style.display==='none'?'block':'none';
-}
-document.add
+  body.classList.toggle('open
