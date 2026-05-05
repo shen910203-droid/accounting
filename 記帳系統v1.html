@@ -275,7 +275,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v05052</div>
+  <div class="nav-brand">⬡ 記帳 v05053</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -2261,4 +2261,48 @@ function removeCat(i){DB.settings.categories.splice(i,1);save();renderSettings()
 function addPerson(){const v=document.getElementById('new-person').value.trim();if(v){DB.settings.persons.push(v);save();renderSettings();}}
 function removePerson(i){DB.settings.persons.splice(i,1);save();renderSettings();}
 
-// ═══════════════
+// ════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════
+function toggleSection(bodyId,cbId){
+  const body=document.getElementById(bodyId);
+  const cb=document.getElementById(cbId);
+  const open=cb.checked;
+  body.classList.toggle('open',open);
+}
+
+function toggleNavMenu(){
+  const menu=document.getElementById('nav-menu');
+  menu.style.display=menu.style.display==='none'?'block':'none';
+}
+
+document.addEventListener('click',e=>{
+  const btn=document.getElementById('nav-menu-btn');
+  const menu=document.getElementById('nav-menu');
+  if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
+    menu.style.display='none';
+  }
+});
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function exportData(){
+  downloadFile('記帳備份_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(DB,null,2),'application/json');
+}
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{try{DB=JSON.parse(ev.target.result);save();renderOverview();alert('匯入成功！');}catch{alert('格式錯誤');}};
+  reader.readAsText(file);
+}
+function downloadFile(name,content,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;a.click();
+}
+
+// ── INIT ──
+loadFromCloud();
+</script>
+</body>
+</html>
