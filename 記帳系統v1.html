@@ -1479,7 +1479,7 @@ function updateTxAlloc(){
       advTotal+=Number(row.querySelector('input[type=number]').value)||0;
     });
   }
-  const allocated=mine+mealTotal+mealInTotal+advTotal;
+  const allocated=mine+mealTotal+advTotal;
   const el=document.getElementById('tx-alloc-total');
   el.textContent=`$${allocated.toLocaleString()} / $${total.toLocaleString()}`;
   el.style.color=allocated===total?'var(--green)':allocated>total?'var(--red)':'var(--yellow)';
@@ -1635,7 +1635,7 @@ function saveTx(){
       advTotal+=Number(row.querySelector('input[type=number]').value)||0;
     });
   }
-  const allocated=mine+mealTotal+mealInTotal+advTotal;
+  const allocated=mine+mealTotal+advTotal;
   if(allocated!==total){
     if(!confirm(`分配金額 $${allocated} 不等於總金額 $${total}，確定繼續？`)) return;
   }
@@ -1658,15 +1658,13 @@ function saveTx(){
     });
   }
 
-  // 存入同事餐費（我出錢，餐費池+）
+  // 存入同事餐費（我出錢，餐費池+，不另記主帳）
   if(document.getElementById('tx-meal-in-check').checked){
     [...document.getElementById('tx-meal-in-rows').children].forEach(row=>{
       const who=row.querySelector('select').value;
       const mAmt=Number(row.querySelector('input[type=number]').value)||0;
       if(!who||!mAmt) return;
-      // 主帳記支出（我出錢）
-      DB.transactions.push({cat:countStat?cat:'不計統計',date,item:`${who} 餐費儲值`,note,amount:mAmt,payMethod:pay});
-      // 餐費池+
+      // 只更新餐費池，現金已在主帳記錄中扣除
       DB.mealTxs.push({id:genId('M'),type:'charge',date,desc:item||note,
         chargeWho:who,amount:mAmt,chargeMethod:'僅餐費'});
     });
