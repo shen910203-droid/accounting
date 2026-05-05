@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v05057</div>
+  <div class="nav-brand">⬡ 記帳 v05058</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -1027,21 +1027,23 @@ function computeAll(){
     const a=Number(tx.amount)||0;
     if(tx.type==='in'||tx.type==='fine'){
       petty+=a;
-      // 撥款進指定帳戶
       if(tx.inBank){
         if(tx.inBank==='現金') cash+=a;
         else if(banks[tx.inBank]!==undefined) banks[tx.inBank]+=a;
       }
     } else if(tx.type==='pool-only'){
-      petty+=a; // 僅計入零用金池，不影響銀行（初始設定用）
-    } else {
+      petty+=a;
+    } else if(tx.type==='out-self'){
+      // 我自行支出：零用金-，我的帳戶也-
       petty-=a;
-      // 支出從指定帳戶扣
       if(tx.outPay){
         if(tx.outPay==='現金') cash-=a;
         else if(s.creditCards.includes(tx.outPay)) cc[tx.outPay]=(cc[tx.outPay]||0)+a;
         else if(banks[tx.outPay]!==undefined) banks[tx.outPay]-=a;
       }
+    } else if(tx.type==='out-person'){
+      // 員工請款：只有零用金-，跟我的帳戶無關
+      petty-=a;
     }
   });
   // 餐費提領會從銀行實際扣
@@ -1253,12 +1255,102 @@ function renderLedger(){
       </div>
       ${amtStr}
       <div class="tx-pay">${payStr}</div>
-      <button class="tx-del" onclick="delTx(${realIdx})">×</button>
+      <button class="tx-del" style="color:var(--t2);font-size:13px;" onclick="editTx(${realIdx})" title="編輯">✎</button>
+      <button class="tx-del" onclick="delTx(${realIdx})" title="刪除">×</button>
     </div>`;
   }).join('');
 
   const lm=document.getElementById('ledger-load-more');
   if(lm) lm.style.display=allTxs.length>ledgerShowing?'block':'none';
+}
+
+function editTx(idx){
+  const tx=DB.transactions[idx];
+  if(!tx) return;
+  // 刪除舊的，開啟新增 Modal 預填資料
+  DB.transactions.splice(idx,1);
+  save();
+  openTxModal();
+  // 預填基本資料
+  document.getElementById('tx-date').value=tx.date||'';
+  document.getElementById('tx-note').value=tx.note||'';
+  // 預填支付方式
+  if(tx.payMethod) document.getElementById('tx-pay-method').value=tx.payMethod;
+  onTxPayChange();
+  // 預填金額
+  if(tx.cat==='內部轉帳'){
+    document.getElementById('tx-int-amt').value=tx.intAmt||'';
+    document.getElementById('tx-int-from').value=tx.intFrom||'';
+    document.getElementById('tx-int-to').value=tx.intTo||'';
+  } else if(tx.cat==='信用卡費'){
+    document.getElementById('tx-cc-card').value=tx.ccCard||'';
+    document.getElementById('tx-cc-amt').value=tx.ccAmt||'';
+    document.getElementById('tx-cc-from').value=tx.ccFrom||'';
+  } else if(tx.cat==='收入'){
+    document.getElementById('tx-income-amt').value=tx.amount||'';
+    document.getElementById('tx-income-acc').value=tx.payMethod||'';
+  } else {
+    document.getElementById('tx-total').value=tx.amount||'';
+    // 清空預設的明細列，重新填
+    document.getElementById('tx-split-rows').innerHTML='';
+    addSplitRow();
+    const row=document.querySelector('.split-row');
+    if(row){
+      row.querySelector('.split-type').value='expense';
+      onSplitTypeChange(row.querySelector('.split-type'));
+      row.querySelector('.split-amt').value=tx.amount||'';
+      if(tx.cat&&row.querySelector('.split-cat')) row.querySelector('.split-cat').value=tx.cat;
+      if(tx.item&&row.querySelector('.split-desc')) row.querySelector('.split-desc').value=tx.item;
+    }
+    updateSplitTotal();
+  }
+}
+
+function editMealTx(idx){
+  const tx=DB.mealTxs[idx];
+  if(!tx) return;
+  DB.mealTxs.splice(idx,1);
+  save();
+  openMealModal();
+  // 預填
+  document.getElementById('m-date').value=tx.date||'';
+  document.getElementById('m-type').value=tx.type||'charge';
+  document.getElementById('m-desc').value=tx.desc||'';
+  onMealTypeChange();
+  if(tx.type==='charge'){
+    document.getElementById('m-charge-who').value=tx.chargeWho||'';
+    document.getElementById('m-charge-amt').value=tx.amount||'';
+    document.getElementById('m-charge-method').value=tx.chargeMethod||'現金';
+    onMealChargeMethodChange();
+  } else if(tx.type==='repay'){
+    document.getElementById('m-repay-who').value=tx.repayWho||'';
+    document.getElementById('m-repay-amt').value=tx.amount||'';
+    document.getElementById('m-repay-method').value=tx.repayMethod||'現金';
+  } else if(tx.type==='split'){
+    document.getElementById('m-payer').value=tx.payer||'';
+    document.getElementById('m-debtor-rows').innerHTML='';
+    (tx.debtors||[]).forEach(d=>{ addDebtorRow(); const rows=document.getElementById('m-debtor-rows').children; const row=rows[rows.length-1]; row.querySelector('select').value=d.who; row.querySelector('input').value=d.amt; });
+    calcPayerTotal();
+  }
+}
+
+function editPettyTx(idx){
+  const tx=DB.pettyTxs[idx];
+  if(!tx) return;
+  DB.pettyTxs.splice(idx,1);
+  save();
+  openPettyModal();
+  // 預填
+  document.getElementById('p-date').value=tx.date||'';
+  document.getElementById('p-type').value=tx.type||'in';
+  document.getElementById('p-desc').value=tx.desc||'';
+  document.getElementById('p-amt').value=tx.amount||'';
+  document.getElementById('p-payer').value=tx.payer||'';
+  document.getElementById('p-repay').value=tx.repay||'';
+  document.getElementById('p-note').value=tx.note||'';
+  onPettyTypeChange();
+  if(tx.inBank) document.getElementById('p-in-bank').value=tx.inBank;
+  if(tx.outPay) document.getElementById('p-out-pay').value=tx.outPay;
 }
 
 function delTx(idx){
@@ -1605,7 +1697,7 @@ function renderMealList(){
     }
     else if(tx.type==='repay') detail=`${tx.repayWho} 提領（${tx.repayMethod}）`;
     else if(tx.type==='petty-in') detail=`零用金轉入 → ${tx.targetWho||''}`;
-    return`<div class="tx-row" style="grid-template-columns:auto auto auto 1fr auto auto;padding:10px 14px;gap:10px;">
+    return`<div class="tx-row" style="grid-template-columns:auto auto auto 1fr auto auto auto;padding:10px 14px;gap:10px;">
       <span style="font-size:10px;font-family:var(--mono);color:var(--accent);white-space:nowrap;">${tx.id||'—'}</span>
       <span class="tx-date" style="white-space:nowrap;">${tx.date||''}</span>
       <span style="color:${tColor[tx.type]};font-size:11px;font-weight:600;white-space:nowrap;">${tLabel[tx.type]||tx.type}</span>
@@ -1614,6 +1706,7 @@ function renderMealList(){
         ${tx.desc?`<div style="font-size:12px;color:var(--t2);margin-top:3px;background:var(--s2);display:inline-block;padding:1px 7px;border-radius:4px;">📝 ${tx.desc}</div>`:''}
       </div>
       <span class="tx-amt" style="color:var(--t2);white-space:nowrap;">$${Number(tx.amount||tx.payerTotal||0).toLocaleString()}</span>
+      <button class="tx-del" style="color:var(--t2);font-size:13px;" onclick="editMealTx(${ri})" title="編輯">✎</button>
       <button class="tx-del" onclick="delMealTx(${ri})">×</button>
     </div>`;
   }).join('');
@@ -1977,6 +2070,7 @@ function renderPetty(){
         </div>
         <span class="tx-amt ${isOut?'out':'in'}" style="white-space:nowrap;">${isOut?'-':'+'}$${Number(tx.amount).toLocaleString()}</span>
         ${tx.repay?`<span style="font-size:11px;color:var(--accent2);white-space:nowrap;background:rgba(232,132,90,.15);padding:2px 7px;border-radius:4px;">${tx.repay}</span>`:'<span></span>'}
+        <button class="tx-del" style="color:var(--t2);font-size:13px;" onclick="editPettyTx(${ri})" title="編輯">✎</button>
         <button class="tx-del" onclick="delPettyTx(${ri})">×</button>
       </div>
     </div>`;
@@ -2008,9 +2102,9 @@ function openPettyModal(){
 function onPettyTypeChange(){
   const type=document.getElementById('p-type').value;
   const isIn=['in','fine'].includes(type);
-  const isOut=['out-person','out-self'].includes(type);
+  const isSelf=type==='out-self'; // 只有我自行支出才需要選付款方式
   document.getElementById('p-in-bank-group').style.display=isIn?'block':'none';
-  document.getElementById('p-out-pay-group').style.display=isOut?'block':'none';
+  document.getElementById('p-out-pay-group').style.display=isSelf?'block':'none';
 }
 
 function savePettyTx(){
@@ -2048,63 +2142,48 @@ function exportPettyReport(){
   const start=document.getElementById('pr-start').value;
   const end=document.getElementById('pr-end').value;
 
-  // 計算期初餘額
+  // 計算期初餘額（start之前的所有變動）
   let openBal=DB.settings.initPetty;
   DB.pettyTxs.forEach(tx=>{
-    if(start&&tx.date<start){
-      if(['in','fine'].includes(tx.type))openBal+=Number(tx.amount);
-      else openBal-=Number(tx.amount);
-    }
+    if(start&&tx.date>=start) return;
+    const a=Number(tx.amount)||0;
+    if(['in','fine','pool-only'].includes(tx.type)) openBal+=a;
+    else openBal-=a;
   });
 
   const filtered=DB.pettyTxs.filter(tx=>(!start||tx.date>=start)&&(!end||tx.date<=end));
   let bal=openBal;
   let seq=0;
 
-  // 公版格式（Tab分隔，可直接貼到公司Excel）
-  // 格式：編號 | 月 | 日 | 摘要 | 收入 | 支出 | 餘額 | 墊款人 | 回款方式 | 備註
   const rows=[];
-
-  // 標題
   rows.push(['邦統貿易 - 零用金明細表','','','','','','','','','']);
-  rows.push(['編號','月','日','摘　　要','收　入','支　出','餘　額','墊款人','回款方式','備　註']);
-
-  // 期初行
-  rows.push(['','','','上期盈餘',openBal>0?openBal:'','',openBal,'','','']);
+  rows.push(['編號','月','日','摘要','收入','支出','餘額','墊款人','回款方式','備註']);
+  rows.push(['','','','上期盈餘',Math.round(openBal),'',Math.round(openBal),'','','']);
 
   filtered.forEach(tx=>{
-    const isOut=!['in','fine'].includes(tx.type);
-    if(isOut) bal-=Number(tx.amount); else bal+=Number(tx.amount);
+    const a=Number(tx.amount)||0;
+    const isIn=['in','fine','pool-only'].includes(tx.type);
+    if(isIn) bal+=a; else bal-=a;
+
     const d=new Date(tx.date+'T00:00:00');
     const mo=isNaN(d.getTime())?'':d.getMonth()+1;
     const day=isNaN(d.getTime())?'':d.getDate();
+    const tLabel={in:'公司撥款','pool-only':'期初設定',fine:'罰款繳入','out-person':'員工請款','out-self':'自行支出'};
 
-    if(tx.type==='in'){
-      rows.push(['','','','零用金入帳',tx.amount,'',Math.round(bal),'','','']);
-    } else if(tx.type==='fine'){
-      rows.push(['','',mo,day,tx.desc||'罰款',tx.amount,'',Math.round(bal),tx.payer||'','','']);
+    if(isIn){
+      rows.push(['',mo,day,`${tLabel[tx.type]||tx.type}${tx.desc?' - '+tx.desc:''}`,a,'',Math.round(bal),tx.payer||'',tx.repay||'',tx.note||'']);
     } else {
       seq++;
-      rows.push([
-        seq, mo, day,
-        tx.desc||'',
-        '', // 支出無收入
-        tx.amount,
-        Math.round(bal),
-        tx.payer||'',
-        tx.repay||'',
-        tx.note||''
-      ]);
+      rows.push([seq,mo,day,tx.desc||'','',a,Math.round(bal),tx.payer||'',tx.repay||'',tx.note||'']);
     }
   });
 
-  // 合計行
-  const tIn=filtered.filter(t=>['in','fine'].includes(t.type)).reduce((a,t)=>a+Number(t.amount),0);
-  const tOut=filtered.filter(t=>!['in','fine'].includes(t.type)).reduce((a,t)=>a+Number(t.amount),0);
-  rows.push(['合計','','','',tIn,tOut,Math.round(bal),'','','']);
+  const tIn=filtered.filter(t=>['in','fine','pool-only'].includes(t.type)).reduce((a,t)=>a+Number(t.amount),0);
+  const tOut=filtered.filter(t=>!['in','fine','pool-only'].includes(t.type)).reduce((a,t)=>a+Number(t.amount),0);
+  rows.push(['合計','','','',Math.round(tIn),Math.round(tOut),Math.round(bal),'','','']);
 
-  const tsv=rows.map(r=>r.join('\t')).join('\n');
-  downloadFile(`零用金報表_${start}_${end}.xls`, '\ufeff'+tsv, 'application/vnd.ms-excel');
+  const tsv=rows.map(r=>r.map(c=>String(c)).join('\t')).join('\r\n');
+  downloadFile(`零用金報表_${start}_${end}.xls`,'\ufeff'+tsv,'application/vnd.ms-excel');
 }
 
 // ════════════════════════════════════════════════════
