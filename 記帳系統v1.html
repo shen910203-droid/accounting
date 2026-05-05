@@ -275,7 +275,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳系統v1</div>
+  <div class="nav-brand">⬡ 記帳 v05051</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -647,11 +647,21 @@ textarea{resize:vertical;min-height:56px;}
         <input type="number" id="m-charge-amt" placeholder="0" min="0">
       </div>
       <div class="fg full">
-        <label class="fl">儲值方式（實際如何給我）</label>
-        <select id="m-charge-method">
+        <label class="fl">收款方式（錢進到哪裡）</label>
+        <select id="m-charge-method" onchange="onMealChargeMethodChange()">
           <option value="現金">現金</option>
-          <option value="轉帳">轉帳</option>
+          <option value="轉帳">銀行轉帳</option>
+          <option value="刷卡">刷卡（信用卡未繳+）</option>
+          <option value="僅餐費">僅計入餐費池（初始設定用）</option>
         </select>
+      </div>
+      <div class="fg full" id="m-charge-bank-group" style="display:none;">
+        <label class="fl">存入哪個帳戶</label>
+        <select id="m-charge-bank"></select>
+      </div>
+      <div class="fg full" id="m-charge-cc-group" style="display:none;">
+        <label class="fl">哪張信用卡</label>
+        <select id="m-charge-cc"></select>
       </div>
     </div>
   </div>
@@ -722,11 +732,12 @@ textarea{resize:vertical;min-height:56px;}
     </div>
     <div class="fg">
       <label class="fl">類型</label>
-      <select id="p-type">
-        <option value="in">公司撥款（零用金+，我銀行+）</option>
+      <select id="p-type" onchange="onPettyTypeChange()">
+        <option value="in">公司撥款（零用金+）</option>
         <option value="out-person">員工請款（零用金-）</option>
-        <option value="out-self">我自行支出（零用金-，我帳戶不動）</option>
+        <option value="out-self">我自行支出（零用金-）</option>
         <option value="fine">罰款繳入（零用金+）</option>
+        <option value="pool-only">僅計入零用金池（初始設定用）</option>
       </select>
     </div>
     <div class="fg">
@@ -736,6 +747,18 @@ textarea{resize:vertical;min-height:56px;}
     <div class="fg">
       <label class="fl">金額</label>
       <input type="number" id="p-amt" placeholder="0" min="0">
+    </div>
+    <!-- 撥款時：匯入哪個帳戶 -->
+    <div class="fg full" id="p-in-bank-group">
+      <label class="fl">匯入帳戶（錢進到哪裡）</label>
+      <select id="p-in-bank"></select>
+    </div>
+    <!-- 支出時：從哪裡付 -->
+    <div class="fg full" id="p-out-pay-group" style="display:none;">
+      <label class="fl">付款方式（錢從哪裡出）</label>
+      <select id="p-out-pay">
+        <option value="現金">現金</option>
+      </select>
     </div>
     <div class="fg">
       <label class="fl">墊款人（員工請款時）</label>
@@ -1020,9 +1043,24 @@ function computeAll(){
   // --- 零用金交易 ---
   DB.pettyTxs.forEach(tx=>{
     const a=Number(tx.amount)||0;
-    if(tx.type==='in'){petty+=a; /* 同時銀行+，視為公司撥款 */}
-    else if(tx.type==='fine') petty+=a;
-    else petty-=a;
+    if(tx.type==='in'||tx.type==='fine'){
+      petty+=a;
+      // 撥款進指定帳戶
+      if(tx.inBank){
+        if(tx.inBank==='現金') cash+=a;
+        else if(banks[tx.inBank]!==undefined) banks[tx.inBank]+=a;
+      }
+    } else if(tx.type==='pool-only'){
+      petty+=a; // 只計入池，不影響銀行
+    } else {
+      petty-=a;
+      // 支出從指定帳戶扣
+      if(tx.outPay){
+        if(tx.outPay==='現金') cash-=a;
+        else if(s.creditCards.includes(tx.outPay)) cc[tx.outPay]=(cc[tx.outPay]||0)+a;
+        else if(banks[tx.outPay]!==undefined) banks[tx.outPay]-=a;
+      }
+    }
   });
   // 餐費提領會從銀行實際扣
   DB.mealTxs.forEach(tx=>{
@@ -1031,11 +1069,16 @@ function computeAll(){
       if(tx.repayMethod==='現金') cash-=a;
       else if(tx.repayBank && banks[tx.repayBank]!==undefined) banks[tx.repayBank]-=a;
     }
-    // 儲值：錢進我帳戶（現金或轉帳）
+    // 儲值：錢進我帳戶（現金、轉帳或刷卡）
     if(tx.type==='charge'){
       const a=Number(tx.amount)||0;
       if(tx.chargeMethod==='現金') cash+=a;
-      else { /* 轉帳進來的預設玉山 */ banks['玉山銀行帳戶']=(banks['玉山銀行帳戶']||0)+a; }
+      else if(tx.chargeMethod==='刷卡'){
+        if(tx.chargeCC && cc[tx.chargeCC]!==undefined) cc[tx.chargeCC]+=a;
+      } else if(tx.chargeMethod==='轉帳'){
+        if(tx.chargeBank && banks[tx.chargeBank]!==undefined) banks[tx.chargeBank]+=a;
+      }
+      // 僅餐費：不影響銀行
     }
     // 零用金轉餐費
     if(tx.type==='petty-in') petty-=Number(tx.amount)||0;
@@ -1161,7 +1204,7 @@ function renderLedger(){
   }
 
   const mf=mSel.value, cf=cSel.value, pf=pSel.value;
-  const allTxs=[...DB.transactions].reverse().filter(tx=>{
+  const allTxs=[...DB.transactions].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).filter(tx=>{
     if(mf&&!tx.date?.startsWith(mf)) return false;
     if(cf==='__expense__'){ if(!EXPENSE_CATS.has(tx.cat)) return false; }
     else if(cf&&tx.cat!==cf) return false;
@@ -1754,19 +1797,28 @@ function openMealModal(){
   document.getElementById('m-debtor-rows').innerHTML='';
 
   const allPersons=[...DB.settings.persons,'申瑋','零用金'];
-  const colleagues=[...DB.settings.persons,'申瑋'];
   ['m-charge-who','m-payer','m-repay-who'].forEach(id=>{
     const el=document.getElementById(id);
     const list=id==='m-repay-who'?DB.settings.persons:allPersons;
     el.innerHTML=list.map(p=>`<option>${p}</option>`).join('');
   });
 
-  const bankSel=document.getElementById('m-repay-bank');
-  bankSel.innerHTML=DB.settings.banks.map(b=>`<option>${b}</option>`).join('');
+  // 帳戶選單
+  const banks=DB.settings.banks;
+  document.getElementById('m-charge-bank').innerHTML=banks.map(b=>`<option>${b}</option>`).join('');
+  document.getElementById('m-charge-cc').innerHTML=DB.settings.creditCards.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('m-repay-bank').innerHTML=banks.map(b=>`<option>${b}</option>`).join('');
 
+  onMealChargeMethodChange();
   addDebtorRow();
   onMealTypeChange();
   document.getElementById('modal-meal').classList.add('open');
+}
+
+function onMealChargeMethodChange(){
+  const m=document.getElementById('m-charge-method').value;
+  document.getElementById('m-charge-bank-group').style.display=m==='轉帳'?'block':'none';
+  document.getElementById('m-charge-cc-group').style.display=m==='刷卡'?'block':'none';
 }
 
 function onMealTypeChange(){
@@ -1818,6 +1870,8 @@ function saveMealTx(){
     tx.chargeWho=document.getElementById('m-charge-who').value;
     tx.amount=Number(document.getElementById('m-charge-amt').value)||0;
     tx.chargeMethod=document.getElementById('m-charge-method').value;
+    if(tx.chargeMethod==='轉帳') tx.chargeBank=document.getElementById('m-charge-bank').value;
+    if(tx.chargeMethod==='刷卡') tx.chargeCC=document.getElementById('m-charge-cc').value;
     if(!tx.amount){alert('請填金額');return;}
   } else if(type==='split'){
     tx.payer=document.getElementById('m-payer').value;
@@ -1930,24 +1984,50 @@ function openPettyModal(){
   document.getElementById('p-desc').value='';
   document.getElementById('p-amt').value='';
   document.getElementById('p-note').value='';
-  // 填入人員選單
+  document.getElementById('p-type').value='in';
+
   const payerSel=document.getElementById('p-payer');
   payerSel.innerHTML=`<option value="">不適用</option>`+
     [...DB.settings.persons,'申瑋'].map(p=>`<option value="${p}">${p}</option>`).join('');
+
+  const allBanks=[...DB.settings.banks,'現金'];
+  document.getElementById('p-in-bank').innerHTML=
+    allBanks.map(b=>`<option>${b}</option>`).join('');
+  document.getElementById('p-out-pay').innerHTML=
+    ['現金',...DB.settings.banks,...DB.settings.creditCards].map(b=>`<option>${b}</option>`).join('');
+
+  onPettyTypeChange();
   document.getElementById('modal-petty').classList.add('open');
 }
 
+function onPettyTypeChange(){
+  const type=document.getElementById('p-type').value;
+  const isIn=['in','fine'].includes(type);
+  const isOut=['out-person','out-self'].includes(type);
+  document.getElementById('p-in-bank-group').style.display=isIn?'block':'none';
+  document.getElementById('p-out-pay-group').style.display=isOut?'block':'none';
+}
+
 function savePettyTx(){
+  const type=document.getElementById('p-type').value;
   const tx={
     id:genId('P'),
     date:document.getElementById('p-date').value,
-    type:document.getElementById('p-type').value,
+    type,
     desc:document.getElementById('p-desc').value,
     amount:document.getElementById('p-amt').value||0,
     payer:document.getElementById('p-payer').value,
     repay:document.getElementById('p-repay').value,
     note:document.getElementById('p-note').value,
   };
+  // 撥款時記錄匯入帳戶
+  if(['in','fine'].includes(type)){
+    tx.inBank=document.getElementById('p-in-bank').value;
+  }
+  // 支出時記錄付款方式
+  if(['out-person','out-self'].includes(type)){
+    tx.outPay=document.getElementById('p-out-pay').value;
+  }
   if(!tx.date||!tx.amount){alert('請填日期和金額');return;}
   DB.pettyTxs.push(tx);
   save();closeModal('modal-petty');renderPetty();renderOverview();
