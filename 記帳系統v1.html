@@ -275,7 +275,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v05055</div>
+  <div class="nav-brand">⬡ 記帳 v05057</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -852,6 +852,13 @@ async function loadFromCloud() {
 async function save() {
   const json = JSON.stringify(DB);
   localStorage.setItem('acct_v3', json);
+
+  // 檢查資料大小，超過 500KB 提醒
+  const sizeKB = Math.round(json.length / 1024);
+  if(sizeKB > 500) {
+    showSyncStatus(`⚠️ 資料量 ${sizeKB}KB，建議年度封存`, 'warn');
+  }
+
   if (_saving) return;
   _saving = true;
   showSyncStatus('儲存中…', 'loading');
@@ -1722,7 +1729,8 @@ function renderMealReport(){
     allPersons.map((p,i)=>{
       const {openBal,ledger,closeBal}=getPersonLedger(p);
       const filtered=pettyOnly?ledger.filter(r=>r.fromPetty):ledger;
-      const curBal=bals[p]??0; // 申瑋用0
+      const curBal=bals[p]??0;
+      const isSpecial=(p==='申瑋'||p==='零用金'); // 不顯示餘額
 
       return`<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px;">
         <!-- 人員標題 -->
@@ -1731,8 +1739,11 @@ function renderMealReport(){
             ${'🌸🍊🌿⭐💎'.split('')[i%5]} ${p}
           </div>
           <div style="display:flex;gap:16px;font-size:12px;">
-            <span style="color:var(--t3);">期初 <span style="font-family:var(--mono);color:var(--text);">$${Math.round(openBal).toLocaleString()}</span></span>
-            <span style="color:var(--t3);">目前餘額 <span style="font-family:var(--mono);font-weight:700;color:${curBal>=0?'var(--green)':'var(--red)'};">${curBal>=0?'+':''}$${Math.round(curBal).toLocaleString()}</span></span>
+            ${isSpecial?
+              `<span style="color:var(--t3);font-size:11px;">（不計入餐費池）</span>`:
+              `<span style="color:var(--t3);">期初 <span style="font-family:var(--mono);color:var(--text);">$${Math.round(openBal).toLocaleString()}</span></span>
+              <span style="color:var(--t3);">目前餘額 <span style="font-family:var(--mono);font-weight:700;color:${curBal>=0?'var(--green)':'var(--red)'};">${curBal>=0?'+':''}$${Math.round(curBal).toLocaleString()}</span></span>`
+            }
           </div>
         </div>
 
@@ -1746,7 +1757,9 @@ function renderMealReport(){
             <th style="font-size:10px;color:var(--t3);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);">類型</th>
             <th style="font-size:10px;color:var(--t3);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);">說明</th>
             <th style="font-size:10px;color:var(--t3);text-align:right;padding:6px 8px;border-bottom:1px solid var(--border);">金額</th>
-            <th style="font-size:10px;color:var(--t3);text-align:right;padding:6px 8px;border-bottom:1px solid var(--border);">當下餘額</th>
+            ${isSpecial?'':
+              `<th style="font-size:10px;color:var(--t3);text-align:right;padding:6px 8px;border-bottom:1px solid var(--border);">當下餘額</th>`
+            }
           </tr></thead>
           <tbody>
             ${filtered.map((r,ri)=>`<tr style="${r.fromPetty?'background:rgba(232,132,90,0.06);':''}${ri%2===1?'background:rgba(255,255,255,0.02);':''}">
@@ -1759,9 +1772,11 @@ function renderMealReport(){
               <td style="font-size:13px;padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);color:${r.change>=0?'var(--green)':'var(--red)'};">
                 ${r.change>=0?'+':''}$${Math.abs(r.change).toLocaleString()}
               </td>
-              <td style="font-size:13px;padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);font-weight:600;color:${r.bal>=0?'var(--text)':'var(--red)'};">
-                $${Math.round(r.bal).toLocaleString()}
-              </td>
+              ${isSpecial?'':
+                `<td style="font-size:13px;padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);font-weight:600;color:${r.bal>=0?'var(--text)':'var(--red)'};">
+                  $${Math.round(r.bal).toLocaleString()}
+                </td>`
+              }
             </tr>`).join('')}
           </tbody>
         </table>
@@ -2227,7 +2242,19 @@ function renderSettings(){
     </div>
     <div class="div"></div>
     <div>
-      <h3 style="font-size:12px;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">⚠️ 危險操作</h3>
+      <h3 style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">📊 儲存空間</h3>
+      ${(()=>{
+        const size=Math.round(JSON.stringify(DB).length/1024);
+        const pct=Math.min(100,Math.round(size/1000*100));
+        const color=size>500?'var(--red)':size>200?'var(--yellow)':'var(--green)';
+        return`<div style="margin-bottom:8px;font-size:13px;">目前資料量：<span style="font-family:var(--mono);color:${color};font-weight:600;">${size} KB</span> / 約1000KB上限</div>
+        <div style="background:var(--s2);border-radius:4px;height:8px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width .3s;"></div>
+        </div>
+        <div class="text-muted mt8">超過500KB建議進行年度封存</div>`;
+      })()}
+    </div>
+    <div class="div"></div>
       <button class="btn btn-danger" onclick="clearAllData()">清除所有資料重新開始</button>
       <div class="text-muted mt8">清除後無法復原，請先匯出備份</div>
     </div>`;
