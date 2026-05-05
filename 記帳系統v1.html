@@ -275,7 +275,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v05053</div>
+  <div class="nav-brand">⬡ 記帳 v05055</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -965,25 +965,39 @@ function computeAll(){
   // --- 主帳交易 ---
   DB.transactions.forEach(tx=>{
     const amt = Number(tx.amount)||0;
-    if(tx.cat==='收入'||tx.cat==='代墊回款'){
+    if(tx.cat==='收入'){
+      // 真正的收入才計入
       if(tx.payMethod==='現金') cash+=amt;
       else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]+=amt;
     } else if(tx.cat==='內部轉帳'){
       const from=tx.intFrom, to=tx.intTo, a=Number(tx.intAmt)||0;
-      // 代墊回款：只影響目標帳戶（from是虛擬的__代墊回款__）
       if(from==='__代墊回款__'){
+        // 代墊回款：銀行+，不算收入
         if(to==='現金') cash+=a; else if(banks[to]!==undefined) banks[to]+=a;
       } else {
         if(from==='現金') cash-=a; else if(banks[from]!==undefined) banks[from]-=a;
         if(to==='現金') cash+=a; else if(banks[to]!==undefined) banks[to]+=a;
       }
     } else if(tx.cat==='信用卡費'){
-      // 從帳戶扣，信用卡未繳減少
       const from=tx.ccFrom, a=Number(tx.ccAmt)||0, card=tx.ccCard;
       if(from==='現金') cash-=a; else if(banks[from]!==undefined) banks[from]-=a;
       if(cc[card]!==undefined) cc[card]=Math.max(0,cc[card]-a);
+    } else if(tx.cat==='代墊款'){
+      // 代墊款：只影響信用卡未繳或銀行，不計入支出
+      if(tx.payMethod==='現金') cash-=amt;
+      else if(s.creditCards.includes(tx.payMethod)) cc[tx.payMethod]=(cc[tx.payMethod]||0)+amt;
+      else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]-=amt;
+    } else if(tx.cat==='代墊回款'){
+      // 代墊回款：銀行+，不算收入
+      if(tx.payMethod==='現金') cash+=amt;
+      else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]+=amt;
+    } else if(tx.cat==='餐費扣款'){
+      // 餐費扣款：只影響支付方式，不計入支出
+      if(tx.payMethod==='現金') cash-=amt;
+      else if(s.creditCards.includes(tx.payMethod)) cc[tx.payMethod]=(cc[tx.payMethod]||0)+amt;
+      else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]-=amt;
     } else {
-      // 一般支出、餐費扣款、代墊款 → 都影響支付方式
+      // 一般支出（飲食/交通等）
       if(tx.payMethod==='現金') cash-=amt;
       else if(s.creditCards.includes(tx.payMethod)) cc[tx.payMethod]=(cc[tx.payMethod]||0)+amt;
       else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]-=amt;
@@ -1481,12 +1495,13 @@ function renderCharts(){
     return true;
   });
 
+  const REAL_EXPENSE_CATS=new Set(['飲食','服飾','交通','娛樂','醫療','居住','雜支','購物']);
   const monthly={};
   for(let m=1;m<=12;m++){const k=`${yr}-${String(m).padStart(2,'0')}`;monthly[k]={income:0,expense:0};}
   txs.forEach(tx=>{
     const k=tx.date?.slice(0,7);if(!monthly[k])return;
-    if(['收入','代墊回款'].includes(tx.cat)) monthly[k].income+=Number(tx.amount||0);
-    else if(!['內部轉帳','代墊款','信用卡費'].includes(tx.cat)) monthly[k].expense+=Number(tx.myAmount||tx.amount||0);
+    if(tx.cat==='收入') monthly[k].income+=Number(tx.amount||0);
+    else if(REAL_EXPENSE_CATS.has(tx.cat)) monthly[k].expense+=Number(tx.amount||0);
   });
   const labels=Object.keys(monthly).map(k=>k.slice(5)+'月');
 
@@ -1999,30 +2014,8 @@ function savePettyTx(){
   }
   if(!tx.date||!tx.amount){alert('請填日期和金額');return;}
   DB.pettyTxs.push(tx);
-
-  // 如果支付方式影響銀行或信用卡，同步一筆到主帳明細
-  const amt=Number(tx.amount)||0;
-  if(['in','fine'].includes(type)&&tx.inBank){
-    // 撥款進帳：主帳新增一筆收入
-    DB.transactions.push({
-      cat:'收入',date:tx.date,
-      item:`零用金撥款 → ${tx.inBank}`,
-      note:tx.desc,amount:amt,
-      payMethod:tx.inBank,_pettySync:true
-    });
-  } else if(['out-person','out-self'].includes(type)&&tx.outPay&&tx.outPay!==''){
-    const s=DB.settings;
-    if(s.creditCards.includes(tx.outPay)||s.banks.includes(tx.outPay)||tx.outPay==='現金'){
-      // 支出影響帳戶：主帳新增一筆零用金支出
-      DB.transactions.push({
-        cat:'零用金支出',date:tx.date,
-        item:tx.desc||(tx.payer?`零用金請款 ${tx.payer}`:'零用金支出'),
-        note:tx.note,amount:amt,
-        payMethod:tx.outPay,_pettySync:true
-      });
-    }
-  }
-
+  // 零用金所有記錄不產生主帳記錄
+  // 銀行/零用金池的變動由 computeAll 自動處理
   save();closeModal('modal-petty');renderPetty();renderOverview();
   resetLedgerFilters();renderLedger();
 }
