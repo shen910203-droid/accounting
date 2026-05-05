@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v05059</div>
+  <div class="nav-brand">⬡ 記帳 v05060</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -1389,6 +1389,16 @@ function openTxModal(){
   });
   document.getElementById('tx-cc-card').innerHTML=
     DB.settings.creditCards.map(c=>`<option>${c}</option>`).join('');
+
+  // 支付方式加上特殊類型
+  const payMethod=document.getElementById('tx-pay-method');
+  payMethod.innerHTML=
+    allPay.map(p=>`<option value="${p}">${p}</option>`).join('')+
+    `<optgroup label="─────────">
+      <option value="__income__">💰 收入</option>
+      <option value="__internal__">⇄ 內部轉帳</option>
+      <option value="__ccfee__">💳 繳信用卡費</option>
+    </optgroup>`;
 
   onTxPayChange();
   addSplitRow(); // 只加一筆
