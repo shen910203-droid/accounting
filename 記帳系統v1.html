@@ -2087,13 +2087,17 @@ function renderSettings(){
     <div class="div"></div>
     <div><h3 style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">💰 初始餘額</h3>
       ${s.banks.map(b=>`<div class="row mb8"><span style="width:150px;font-size:13px;">${b}</span>
-        <input type="number" value="${s.initBanks[b]||0}" style="width:120px;" onchange="s.initBanks['${b}']=Number(this.value);save();"></div>`).join('')}
-      <div class="row mb8"><span style="width:150px;font-size:13px;">現金</span><input type="number" value="${s.initCash}" style="width:120px;" onchange="DB.settings.initCash=Number(this.value);save();"></div>
-      <div class="row mb8"><span style="width:150px;font-size:13px;">零用金初始</span><input type="number" value="${s.initPetty}" style="width:120px;" onchange="DB.settings.initPetty=Number(this.value);save();"></div>
+        <input type="number" id="ib-${b.replace(/[^a-zA-Z0-9]/g,'_')}" value="${s.initBanks[b]||0}" style="width:120px;"></div>`).join('')}
+      <div class="row mb8"><span style="width:150px;font-size:13px;">現金</span><input type="number" id="ib-cash" value="${s.initCash}" style="width:120px;"></div>
+      <div class="row mb8"><span style="width:150px;font-size:13px;">零用金初始</span><input type="number" id="ib-petty" value="${s.initPetty}" style="width:120px;"></div>
       <div class="div"></div>
       <div style="font-size:12px;color:var(--t3);margin-bottom:8px;">信用卡初始未繳</div>
       ${s.creditCards.map(c=>`<div class="row mb8"><span style="width:150px;font-size:13px;">${c}</span>
-        <input type="number" value="${s.initCC[c]||0}" style="width:120px;" onchange="s.initCC['${c}']=Number(this.value);save();"></div>`).join('')}
+        <input type="number" id="ic-${c.replace(/[^a-zA-Z0-9]/g,'_')}" value="${s.initCC[c]||0}" style="width:120px;"></div>`).join('')}
+      <div class="mt12">
+        <button class="btn btn-primary" onclick="confirmInitBalances()" style="width:100%;">✅ 確認更新初始餘額</button>
+        <div class="text-muted mt8">填完後按確認才會儲存並更新總覽</div>
+      </div>
     </div>
     <div class="div"></div>
     <div>
@@ -2101,6 +2105,25 @@ function renderSettings(){
       <button class="btn btn-danger" onclick="clearAllData()">清除所有資料重新開始</button>
       <div class="text-muted mt8">清除後無法復原，請先匯出備份</div>
     </div>`;
+}
+
+function confirmInitBalances(){
+  const s=DB.settings;
+  s.banks.forEach(b=>{
+    const el=document.getElementById('ib-'+b.replace(/[^a-zA-Z0-9]/g,'_'));
+    if(el) s.initBanks[b]=Number(el.value)||0;
+  });
+  const cash=document.getElementById('ib-cash');
+  if(cash) s.initCash=Number(cash.value)||0;
+  const petty=document.getElementById('ib-petty');
+  if(petty) s.initPetty=Number(petty.value)||0;
+  s.creditCards.forEach(c=>{
+    const el=document.getElementById('ic-'+c.replace(/[^a-zA-Z0-9]/g,'_'));
+    if(el) s.initCC[c]=Number(el.value)||0;
+  });
+  save();
+  renderOverview();
+  alert('✅ 初始餘額已更新！');
 }
 
 function addCC(){const v=document.getElementById('new-cc').value.trim();if(v){DB.settings.creditCards.push(v);DB.settings.initCC[v]=0;save();renderSettings();}}
