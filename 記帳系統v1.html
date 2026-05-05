@@ -1796,7 +1796,10 @@ function renderMealList(){
   list.innerHTML=showing.map((tx,i)=>{
     const ri=DB.mealTxs.length-1-i;
     let detail='';
-    if(tx.type==='charge') detail=`${tx.chargeWho} 儲值（${tx.chargeMethod}）`;
+    if(tx.type==='charge'){
+      const method=tx.chargeMethod==='僅餐費'?'我出錢存入':tx.chargeMethod;
+      detail=`${tx.chargeWho} 儲值（${method}）`;
+    }
     else if(tx.type==='split'){
       const debt=(tx.debtors||[]).map(d=>`${d.who} -$${Number(d.amt).toLocaleString()}`).join('、');
       detail=`${tx.payer} 墊付 → ${debt}`;
@@ -2233,8 +2236,20 @@ function savePettyTx(){
   }
   if(!tx.date||!tx.amount){alert('請填日期和金額');return;}
   DB.pettyTxs.push(tx);
-  // 零用金所有記錄不產生主帳記錄
-  // 銀行/零用金池的變動由 computeAll 自動處理
+
+  // 回款方式選「加入餐費」→ 同步到餐費明細
+  if(tx.type==='out-person' && tx.repay==='加餐費' && tx.payer){
+    DB.mealTxs.push({
+      id:genId('M'),
+      type:'charge',
+      date:tx.date,
+      desc:`零用金轉入，代墊${tx.desc||''}`,
+      chargeWho:tx.payer,
+      amount:Number(tx.amount),
+      chargeMethod:'僅餐費'
+    });
+  }
+
   save();closeModal('modal-petty');renderPetty();renderOverview();
   resetLedgerFilters();renderLedger();
 }
