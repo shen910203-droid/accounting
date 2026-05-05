@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v05058</div>
+  <div class="nav-brand">⬡ 記帳 v05059</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -1947,10 +1947,10 @@ function calcPayerTotal(){
 
 // ── 自動編號產生器 ──
 function genId(prefix){
-  const today=new Date().toISOString().slice(2,10).replace(/-/g,''); // 260504
-  const sameDay=(prefix==='M'?DB.mealTxs:DB.pettyTxs)
-    .filter(t=>t.id&&t.id.startsWith(prefix+today));
-  const seq=String(sameDay.length+1).padStart(2,'0');
+  const today=new Date().toISOString().slice(2,10).replace(/-/g,'');
+  const arr=prefix==='M'?DB.mealTxs:DB.pettyTxs;
+  const todayCount=arr.filter(t=>t.id&&t.id.startsWith(prefix+today)).length;
+  const seq=String(todayCount+1).padStart(2,'0');
   return `${prefix}${today}${seq}`;
 }
 
@@ -2064,7 +2064,7 @@ function renderPetty(){
             ${tx.desc||''}
             ${tx.payer?`<span style="color:var(--accent);font-size:11px;margin-left:6px;">（${tx.payer}）</span>`:''}
             ${tx.inBank?`<span style="color:var(--green);font-size:11px;margin-left:6px;">→ ${tx.inBank}</span>`:''}
-            ${tx.outPay?`<span style="color:var(--t3);font-size:11px;margin-left:6px;">← ${tx.outPay}</span>`:''}
+            ${tx.outPay&&tx.type==='out-self'?`<span style="color:var(--t3);font-size:11px;margin-left:6px;">← ${tx.outPay}</span>`:''}
           </div>
           ${tx.note?`<div style="font-size:11px;color:var(--t3);margin-top:2px;">${tx.note}</div>`:''}
         </div>
