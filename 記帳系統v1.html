@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050517</div>
+  <div class="nav-brand">⬡ 記帳 v050518</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -2257,7 +2257,15 @@ function savePettyTx(){
 
 function delPettyTx(idx){
   if(!confirm('確定刪除？'))return;
-  DB.pettyTxs.splice(idx,1);save();renderPetty();renderOverview();
+  const tx=DB.pettyTxs[idx];
+  // 如果是員工請款+加入餐費，同步刪除餐費明細
+  if(tx&&tx.type==='out-person'&&tx.repay==='加餐費'&&tx.payer){
+    const desc=`零用金轉入，代墊${tx.desc||''}`;
+    const mi=DB.mealTxs.findIndex(m=>m.type==='charge'&&m.chargeWho===tx.payer&&m.chargeMethod==='僅餐費'&&m.desc===desc&&m.date===tx.date);
+    if(mi!==-1) DB.mealTxs.splice(mi,1);
+  }
+  DB.pettyTxs.splice(idx,1);
+  save();renderPetty();renderOverview();renderMeal();
 }
 
 function exportPettyReport(){
