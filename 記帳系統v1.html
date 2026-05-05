@@ -816,7 +816,10 @@ let _saving = false;
 async function loadFromCloud() {
   showSyncStatus('載入中…', 'loading');
   try {
-    const res = await fetch(GAS_URL + '?method=load');
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 8000);
+    const res = await fetch(GAS_URL + '?method=load', {signal:controller.signal});
+    clearTimeout(timeout);
     const text = await res.text();
     const data = JSON.parse(text);
     if (data && data.settings) {
@@ -1026,11 +1029,6 @@ function computeAll(){
     // 零用金轉餐費
     if(tx.type==='petty-in') petty-=Number(tx.amount)||0;
   });
-  // 公司撥款進銀行
-  DB.pettyTxs.filter(t=>t.type==='in').forEach(tx=>{
-    banks['玉山銀行帳戶']=(banks['玉山銀行帳戶']||0)+Number(tx.amount);
-  });
-
   const totalCC = Object.values(cc).reduce((a,b)=>a+b,0);
   const mealPool = computeMealPool();
   const totalBank = Object.values(banks).reduce((a,b)=>a+b,0);
@@ -1915,6 +1913,8 @@ function renderPetty(){
           <div style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             ${tx.desc||''}
             ${tx.payer?`<span style="color:var(--accent);font-size:11px;margin-left:6px;">（${tx.payer}）</span>`:''}
+            ${tx.inBank?`<span style="color:var(--green);font-size:11px;margin-left:6px;">→ ${tx.inBank}</span>`:''}
+            ${tx.outPay?`<span style="color:var(--t3);font-size:11px;margin-left:6px;">← ${tx.outPay}</span>`:''}
           </div>
           ${tx.note?`<div style="font-size:11px;color:var(--t3);margin-top:2px;">${tx.note}</div>`:''}
         </div>
@@ -1968,17 +1968,40 @@ function savePettyTx(){
     repay:document.getElementById('p-repay').value,
     note:document.getElementById('p-note').value,
   };
-  // 撥款時記錄匯入帳戶
   if(['in','fine'].includes(type)){
     tx.inBank=document.getElementById('p-in-bank').value;
   }
-  // 支出時記錄付款方式
   if(['out-person','out-self'].includes(type)){
     tx.outPay=document.getElementById('p-out-pay').value;
   }
   if(!tx.date||!tx.amount){alert('請填日期和金額');return;}
   DB.pettyTxs.push(tx);
+
+  // 如果支付方式影響銀行或信用卡，同步一筆到主帳明細
+  const amt=Number(tx.amount)||0;
+  if(['in','fine'].includes(type)&&tx.inBank){
+    // 撥款進帳：主帳新增一筆收入
+    DB.transactions.push({
+      cat:'收入',date:tx.date,
+      item:`零用金撥款 → ${tx.inBank}`,
+      note:tx.desc,amount:amt,
+      payMethod:tx.inBank,_pettySync:true
+    });
+  } else if(['out-person','out-self'].includes(type)&&tx.outPay&&tx.outPay!==''){
+    const s=DB.settings;
+    if(s.creditCards.includes(tx.outPay)||s.banks.includes(tx.outPay)||tx.outPay==='現金'){
+      // 支出影響帳戶：主帳新增一筆零用金支出
+      DB.transactions.push({
+        cat:'零用金支出',date:tx.date,
+        item:tx.desc||(tx.payer?`零用金請款 ${tx.payer}`:'零用金支出'),
+        note:tx.note,amount:amt,
+        payMethod:tx.outPay,_pettySync:true
+      });
+    }
+  }
+
   save();closeModal('modal-petty');renderPetty();renderOverview();
+  resetLedgerFilters();renderLedger();
 }
 
 function delPettyTx(idx){
@@ -2236,30 +2259,4 @@ function toggleNavMenu(){
   const menu=document.getElementById('nav-menu');
   menu.style.display=menu.style.display==='none'?'block':'none';
 }
-document.addEventListener('click',e=>{
-  const btn=document.getElementById('nav-menu-btn');
-  const menu=document.getElementById('nav-menu');
-  if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
-    menu.style.display='none';
-  }
-});
-
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.modal-overlay').forEach(m=>{
-  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
-});
-
-function exportData(){
-  downloadFile('記帳備份_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(DB,null,2),'application/json');
-}
-function importData(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{try{DB=JSON.parse(ev.target.result);save();renderOverview();alert('匯入成功！');}catch{alert('格式錯誤');}};
-  reader.readAsText(file);
-}
-function downloadFile(name,content,type){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([content],{type}));
-  a.download=name;a.click();
-}
+document.add
