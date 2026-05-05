@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v05060</div>
+  <div class="nav-brand">⬡ 記帳 v050511</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -1434,7 +1434,8 @@ function addSplitRow(){
       <select class="split-type" onchange="onSplitTypeChange(this)"
         style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
         <option value="expense">我的支出</option>
-        <option value="meal">餐費扣款</option>
+        <option value="meal-in">餐費存入（我出錢+同事餐費+）</option>
+        <option value="meal">餐費扣款（同事消費-）</option>
         <option value="advance">代墊</option>
       </select>
       <input type="number" class="split-amt" placeholder="金額" min="0" oninput="updateSplitTotal()"
@@ -1459,7 +1460,16 @@ function addSplitRow(){
         style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;width:100%;">
         ${colleagues.map(p=>`<option value="${p}">${p}</option>`).join('')}
       </select>
-      <div class="text-muted mt8">餐費池自動扣款，不計入我的支出</div>
+      <div class="text-muted mt8">餐費池扣款，不計入我的支出</div>
+    </div>
+
+    <!-- 餐費存入：選同事（我出錢，他們餐費+） -->
+    <div class="split-meal-in-detail" style="display:none;">
+      <select class="split-meal-in-who"
+        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;width:100%;">
+        ${colleagues.map(p=>`<option value="${p}">${p}</option>`).join('')}
+      </select>
+      <div class="text-muted mt8">我的錢-，同事餐費+，計入我的支出</div>
     </div>
 
     <!-- 代墊：選對象（預設隱藏） -->
@@ -1483,6 +1493,7 @@ function onSplitTypeChange(sel){
   const type=sel.value;
   row.querySelector('.split-expense-detail').style.display=type==='expense'?'grid':'none';
   row.querySelector('.split-meal-detail').style.display=type==='meal'?'block':'none';
+  row.querySelector('.split-meal-in-detail').style.display=type==='meal-in'?'block':'none';
   row.querySelector('.split-adv-detail').style.display=type==='advance'?'block':'none';
 }
 
@@ -1563,9 +1574,20 @@ function saveTx(){
       const tx={cat,date,item:desc,note,amount:amt,myAmount:amt,payMethod};
       DB.transactions.push(tx);
 
+    } else if(type==='meal-in'){
+      // 餐費存入：我出錢計入支出，同事餐費+
+      const who=row.querySelector('.split-meal-in-who').value;
+      // 主帳記一筆支出（計入個人支出統計）
+      const tx={cat:'飲食',date,item:`${who} 餐費`,note,amount:amt,myAmount:amt,payMethod};
+      DB.transactions.push(tx);
+      // 同步到餐費：同事儲值（我付錢）
+      DB.mealTxs.push({
+        id:genId('M'),type:'charge',date,desc:note,
+        chargeWho:who,amount:amt,chargeMethod:'僅餐費'
+      });
+
     } else if(type==='meal'){
       const who=row.querySelector('.split-meal-who').value;
-      // 餐費扣款：記主帳（標記餐費），同步餐費明細
       const tx={cat:'餐費扣款',date,item:`${who} 餐費`,note,amount:amt,payMethod,_mealSync:true};
       DB.transactions.push(tx);
       DB.mealTxs.push({
