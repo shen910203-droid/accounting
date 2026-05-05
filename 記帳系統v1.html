@@ -1267,8 +1267,7 @@ function openTxModal(){
     DB.settings.creditCards.map(c=>`<option>${c}</option>`).join('');
 
   onTxPayChange();
-  // 預設加一筆我的支出
-  addSplitRow();
+  addSplitRow(); // 只加一筆
   document.getElementById('modal-tx').classList.add('open');
 }
 
@@ -1288,60 +1287,73 @@ function onTxPayChange(){
 function onTxTotalChange(){updateSplitTotal();}
 
 function addSplitRow(){
-  const expCats=DB.settings.categories.filter(c=>!['收入','代墊回款','內部轉帳','信用卡費'].includes(c));
+  const expCats=DB.settings.categories.filter(c=>!['收入','代墊回款','內部轉帳','信用卡費','餐費扣款','零用金支出'].includes(c));
+  const colleagues=DB.settings.persons;
   const allPersons=[...DB.settings.persons,'其他'];
+
   const div=document.createElement('div');
-  div.style='background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px;margin-bottom:8px;';
+  div.className='split-row';
+  div.style='background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin-bottom:8px;';
+
   div.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px;align-items:center;">
+    <div style="display:grid;grid-template-columns:140px 1fr auto;gap:8px;margin-bottom:8px;align-items:center;">
       <select class="split-type" onchange="onSplitTypeChange(this)"
-        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
         <option value="expense">我的支出</option>
-        <option value="meal">餐費扣款（同事）</option>
-        <option value="advance">代墊（等對方還）</option>
+        <option value="meal">餐費扣款</option>
+        <option value="advance">代墊</option>
       </select>
       <input type="number" class="split-amt" placeholder="金額" min="0" oninput="updateSplitTotal()"
-        style="background:var(--s3);border:1px solid var(--border);color:var(--yellow);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-      <button type="button" onclick="this.closest('div[style]').remove();updateSplitTotal()"
-        style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:0;">×</button>
+        style="background:var(--s3);border:1px solid var(--border);color:var(--yellow);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:13px;">
+      <button type="button" onclick="this.closest('.split-row').remove();updateSplitTotal()"
+        style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px;line-height:1;">×</button>
     </div>
-    <!-- 我的支出：類別+說明 -->
+
+    <!-- 我的支出：類別+說明（預設顯示） -->
     <div class="split-expense-detail" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <select class="split-cat"
-        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
         ${expCats.map(c=>`<option>${c}</option>`).join('')}
       </select>
       <input type="text" class="split-desc" placeholder="說明（選填）"
-        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
     </div>
-    <!-- 餐費扣款：選同事 -->
+
+    <!-- 餐費扣款：選同事（預設隱藏） -->
     <div class="split-meal-detail" style="display:none;">
       <select class="split-meal-who"
-        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;width:100%;">
-        ${DB.settings.persons.map(p=>`<option>${p}</option>`).join('')}
+        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;width:100%;">
+        ${colleagues.map(p=>`<option value="${p}">${p}</option>`).join('')}
       </select>
+      <div class="text-muted mt8">餐費池自動扣款，不計入我的支出</div>
     </div>
-    <!-- 代墊：對象 -->
-    <div class="split-adv-detail" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px;display:none;">
-      <select class="split-adv-who" onchange="onSplitAdvWhoChange(this)"
-        style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-        ${allPersons.map(p=>`<option>${p}</option>`).join('')}
-      </select>
-      <input type="text" class="split-adv-name" placeholder="對象姓名" style="display:none;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+
+    <!-- 代墊：選對象（預設隱藏） -->
+    <div class="split-adv-detail" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <select class="split-adv-who" onchange="onSplitAdvWhoChange(this)"
+          style="background:var(--s3);border:1px solid var(--border);color:var(--text);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+          ${allPersons.map(p=>`<option value="${p}">${p}</option>`).join('')}
+        </select>
+        <input type="text" class="split-adv-name" placeholder="對象姓名"
+          style="display:none;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:8px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+      </div>
+      <div class="text-muted mt8">對方需另外還款，進入代墊追蹤</div>
     </div>`;
+
   document.getElementById('tx-split-rows').appendChild(div);
 }
 
 function onSplitTypeChange(sel){
-  const row=sel.closest('div[style]');
+  const row=sel.closest('.split-row');
   const type=sel.value;
   row.querySelector('.split-expense-detail').style.display=type==='expense'?'grid':'none';
   row.querySelector('.split-meal-detail').style.display=type==='meal'?'block':'none';
-  row.querySelector('.split-adv-detail').style.display=type==='advance'?'grid':'none';
+  row.querySelector('.split-adv-detail').style.display=type==='advance'?'block':'none';
 }
 
 function onSplitAdvWhoChange(sel){
-  const nameInp=sel.parentElement.querySelector('.split-adv-name');
+  const nameInp=sel.closest('.split-adv-detail').querySelector('.split-adv-name');
   nameInp.style.display=sel.value==='其他'?'block':'none';
 }
 
@@ -2249,48 +2261,4 @@ function removeCat(i){DB.settings.categories.splice(i,1);save();renderSettings()
 function addPerson(){const v=document.getElementById('new-person').value.trim();if(v){DB.settings.persons.push(v);save();renderSettings();}}
 function removePerson(i){DB.settings.persons.splice(i,1);save();renderSettings();}
 
-// ════════════════════════════════════════════════════
-//  UTILS
-// ════════════════════════════════════════════════════
-function toggleSection(bodyId,cbId){
-  const body=document.getElementById(bodyId);
-  const cb=document.getElementById(cbId);
-  const open=cb.checked;
-  body.classList.toggle('open',open);
-}
-
-function toggleNavMenu(){
-  const menu=document.getElementById('nav-menu');
-  menu.style.display=menu.style.display==='none'?'block':'none';
-}
-
-document.addEventListener('click',e=>{
-  const btn=document.getElementById('nav-menu-btn');
-  const menu=document.getElementById('nav-menu');
-  if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
-    menu.style.display='none';
-  }
-});
-
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-
-function exportData(){
-  downloadFile('記帳備份_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(DB,null,2),'application/json');
-}
-function importData(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{try{DB=JSON.parse(ev.target.result);save();renderOverview();alert('匯入成功！');}catch{alert('格式錯誤');}};
-  reader.readAsText(file);
-}
-function downloadFile(name,content,type){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([content],{type}));
-  a.download=name;a.click();
-}
-
-// ── INIT ──
-loadFromCloud();
-</script>
-</body>
-</html>
+// ═══════════════
