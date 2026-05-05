@@ -257,6 +257,7 @@ textarea{resize:vertical;min-height:56px;}
 
   /* 餐費報表表格 - 只顯示重要欄位 */
   #meal-report-content table{font-size:11px;width:100%;}
+  #meal-report-content div[style*="min-width:460px"]{min-width:unset!important;overflow-x:auto;}
   #meal-report-content td,#meal-report-content th{padding:4px 5px;}
   #meal-report-content th:first-child,
   #meal-report-content td:first-child{display:none;}
@@ -269,6 +270,9 @@ textarea{resize:vertical;min-height:56px;}
   .sh{gap:6px;}
   .sh-title{font-size:15px;}
   .btn{padding:7px 12px;font-size:12px;}
+
+  /* 設定頁初始餘額 */
+  .settings-bal-row{flex-direction:column;align-items:flex-start!important;}
 }
 </style>
 </head>
