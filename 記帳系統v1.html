@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050514</div>
+  <div class="nav-brand">⬡ 記帳 v050515</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -543,12 +543,23 @@ textarea{resize:vertical;min-height:56px;}
   <!-- 同事餐費（附加選項） -->
   <div id="tx-meal-addon" style="display:none;">
     <div class="div"></div>
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px;">
-      <input type="checkbox" id="tx-meal-check" onchange="onTxMealCheck()" style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0;">
+    <!-- 扣款：同事消費，餐費池- -->
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--red);margin-bottom:8px;">
+      <input type="checkbox" id="tx-meal-check" onchange="onTxMealCheck()" style="accent-color:var(--red);width:16px;height:16px;flex-shrink:0;">
       <span>從同事餐費扣款（同事消費，餐費池-）</span>
     </label>
     <div id="tx-meal-rows" style="display:none;"></div>
-    <button type="button" id="tx-meal-add-btn" onclick="addTxMealRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增人員</button>
+    <button type="button" id="tx-meal-add-btn" onclick="addTxMealRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增扣款人員</button>
+
+    <div class="div" style="margin:12px 0;"></div>
+
+    <!-- 存入：我出錢給同事，餐費池+ -->
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px;">
+      <input type="checkbox" id="tx-meal-in-check" onchange="onTxMealInCheck()" style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0;">
+      <span>存入同事餐費（我出錢，餐費池+）</span>
+    </label>
+    <div id="tx-meal-in-rows" style="display:none;"></div>
+    <button type="button" id="tx-meal-in-add-btn" onclick="addTxMealInRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增存入人員</button>
   </div>
 
   <!-- 代墊（附加選項） -->
@@ -1389,10 +1400,14 @@ function openTxModal(){
   document.getElementById('tx-note').value='';
   document.getElementById('tx-count-stat').checked=true;
   document.getElementById('tx-meal-check').checked=false;
+  document.getElementById('tx-meal-in-check').checked=false;
   document.getElementById('tx-adv-check').checked=false;
   document.getElementById('tx-meal-rows').style.display='none';
   document.getElementById('tx-meal-rows').innerHTML='';
   document.getElementById('tx-meal-add-btn').style.display='none';
+  document.getElementById('tx-meal-in-rows').style.display='none';
+  document.getElementById('tx-meal-in-rows').innerHTML='';
+  document.getElementById('tx-meal-in-add-btn').style.display='none';
   document.getElementById('tx-adv-rows').style.display='none';
   document.getElementById('tx-adv-rows').innerHTML='';
   document.getElementById('tx-adv-add-btn').style.display='none';
@@ -1448,10 +1463,15 @@ function updateTxAlloc(){
   document.getElementById('tx-alloc-bar').style.display='block';
 
   const mine=Number(document.getElementById('tx-mine').value)||0;
-  let mealTotal=0,advTotal=0;
+  let mealTotal=0,mealInTotal=0,advTotal=0;
   if(document.getElementById('tx-meal-check').checked){
     [...document.getElementById('tx-meal-rows').children].forEach(row=>{
       mealTotal+=Number(row.querySelector('input[type=number]').value)||0;
+    });
+  }
+  if(document.getElementById('tx-meal-in-check').checked){
+    [...document.getElementById('tx-meal-in-rows').children].forEach(row=>{
+      mealInTotal+=Number(row.querySelector('input[type=number]').value)||0;
     });
   }
   if(document.getElementById('tx-adv-check').checked){
@@ -1459,7 +1479,7 @@ function updateTxAlloc(){
       advTotal+=Number(row.querySelector('input[type=number]').value)||0;
     });
   }
-  const allocated=mine+mealTotal+advTotal;
+  const allocated=mine+mealTotal+mealInTotal+advTotal;
   const el=document.getElementById('tx-alloc-total');
   el.textContent=`$${allocated.toLocaleString()} / $${total.toLocaleString()}`;
   el.style.color=allocated===total?'var(--green)':allocated>total?'var(--red)':'var(--yellow)';
@@ -1482,6 +1502,28 @@ function onTxPayChange(){
   document.getElementById('tx-meal-addon').style.display=isNormal?'block':'none';
   document.getElementById('tx-adv-addon').style.display=isNormal?'block':'none';
   if(!isNormal) document.getElementById('tx-alloc-bar').style.display='none';
+}
+
+function onTxMealInCheck(){
+  const checked=document.getElementById('tx-meal-in-check').checked;
+  document.getElementById('tx-meal-in-rows').style.display=checked?'block':'none';
+  document.getElementById('tx-meal-in-add-btn').style.display=checked?'block':'none';
+  if(checked&&document.getElementById('tx-meal-in-rows').children.length===0) addTxMealInRow();
+  updateTxAlloc();
+}
+
+function addTxMealInRow(){
+  const div=document.createElement('div');
+  div.style='display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px;align-items:center;';
+  div.innerHTML=`
+    <select style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+      ${DB.settings.persons.map(p=>`<option>${p}</option>`).join('')}
+    </select>
+    <input type="number" placeholder="金額" min="0" oninput="updateTxAlloc()"
+      style="background:var(--s2);border:1px solid var(--border);color:var(--green);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+    <button type="button" onclick="this.parentElement.remove();updateTxAlloc()"
+      style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;">×</button>`;
+  document.getElementById('tx-meal-in-rows').appendChild(div);
 }
 
 function onTxMealCheck(){
@@ -1576,11 +1618,16 @@ function saveTx(){
   const countStat=document.getElementById('tx-count-stat').checked;
   if(!total){alert('請填金額');return;}
 
-  // 計算餐費和代墊加總
-  let mealTotal=0,advTotal=0;
+  // 計算餐費、餐費存入、代墊加總
+  let mealTotal=0,mealInTotal=0,advTotal=0;
   if(document.getElementById('tx-meal-check').checked){
     [...document.getElementById('tx-meal-rows').children].forEach(row=>{
       mealTotal+=Number(row.querySelector('input[type=number]').value)||0;
+    });
+  }
+  if(document.getElementById('tx-meal-in-check').checked){
+    [...document.getElementById('tx-meal-in-rows').children].forEach(row=>{
+      mealInTotal+=Number(row.querySelector('input[type=number]').value)||0;
     });
   }
   if(document.getElementById('tx-adv-check').checked){
@@ -1588,30 +1635,40 @@ function saveTx(){
       advTotal+=Number(row.querySelector('input[type=number]').value)||0;
     });
   }
-  const allocated=mine+mealTotal+advTotal;
+  const allocated=mine+mealTotal+mealInTotal+advTotal;
   if(allocated!==total){
     if(!confirm(`分配金額 $${allocated} 不等於總金額 $${total}，確定繼續？`)) return;
   }
 
-  // 主帳記錄
+  // 主帳記錄（我的支出）
   DB.transactions.push({
     cat:countStat?cat:'不計統計',
     date,item,note,amount:mine,payMethod:pay
   });
 
-  // 同時影響餐費（餐費池-）
+  // 從同事餐費扣款（餐費池-）
   if(document.getElementById('tx-meal-check').checked){
     [...document.getElementById('tx-meal-rows').children].forEach(row=>{
       const who=row.querySelector('select').value;
       const mAmt=Number(row.querySelector('input[type=number]').value)||0;
       if(!who||!mAmt) return;
-      // 主帳記餐費扣款
-      DB.transactions.push({
-        cat:'餐費扣款',date,item:`${who} 餐費`,note,amount:mAmt,payMethod:pay
-      });
-      // 餐費明細
+      DB.transactions.push({cat:'餐費扣款',date,item:`${who} 餐費`,note,amount:mAmt,payMethod:pay});
       DB.mealTxs.push({id:genId('M'),type:'split',date,desc:item||note,
         payer:'申瑋',payerTotal:mAmt,amount:mAmt,debtors:[{who,amt:mAmt}]});
+    });
+  }
+
+  // 存入同事餐費（我出錢，餐費池+）
+  if(document.getElementById('tx-meal-in-check').checked){
+    [...document.getElementById('tx-meal-in-rows').children].forEach(row=>{
+      const who=row.querySelector('select').value;
+      const mAmt=Number(row.querySelector('input[type=number]').value)||0;
+      if(!who||!mAmt) return;
+      // 主帳記支出（我出錢）
+      DB.transactions.push({cat:countStat?cat:'不計統計',date,item:`${who} 餐費儲值`,note,amount:mAmt,payMethod:pay});
+      // 餐費池+
+      DB.mealTxs.push({id:genId('M'),type:'charge',date,desc:item||note,
+        chargeWho:who,amount:mAmt,chargeMethod:'僅餐費'});
     });
   }
 
@@ -1622,10 +1679,7 @@ function saveTx(){
       const whoName=whoSel==='其他'?(row.querySelector('.adv-name-inp')?.value||'其他'):whoSel;
       const aAmt=Number(row.querySelector('input[type=number]').value)||0;
       if(!whoName||!aAmt) return;
-      // 主帳記代墊款
-      DB.transactions.push({
-        cat:'代墊款',date,item:`代墊-${whoName}`,note,amount:aAmt,payMethod:pay
-      });
+      DB.transactions.push({cat:'代墊款',date,item:`代墊-${whoName}`,note,amount:aAmt,payMethod:pay});
       DB.advances.push({id:Date.now()+Math.random(),date,who:whoName,amount:aAmt,desc:item||note,settled:false});
     });
   }
