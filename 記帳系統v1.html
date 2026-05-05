@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050512</div>
+  <div class="nav-brand">⬡ 記帳 v050514</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -474,8 +474,18 @@ textarea{resize:vertical;min-height:56px;}
       <select id="tx-pay-method" onchange="onTxPayChange()"></select>
     </div>
     <div class="fg" id="tx-amt-group">
-      <label class="fl">金額</label>
-      <input type="number" id="tx-total" placeholder="0" min="0">
+      <label class="fl">總金額</label>
+      <input type="number" id="tx-total" placeholder="0" min="0" oninput="onTxTotalChange()">
+    </div>
+    <div class="fg" id="tx-mine-group">
+      <label class="fl">我的實際支出</label>
+      <input type="number" id="tx-mine" placeholder="0" min="0" oninput="onTxMineChange()">
+    </div>
+    <div class="fg full" id="tx-stat-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--t2);white-space:nowrap;">
+        <input type="checkbox" id="tx-count-stat" checked onchange="onTxStatChange()" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;">
+        <span>計入個人支出統計</span>
+      </label>
     </div>
     <div class="fg" id="tx-cat-group">
       <label class="fl">類別</label>
@@ -489,11 +499,13 @@ textarea{resize:vertical;min-height:56px;}
       <label class="fl">備註</label>
       <input type="text" id="tx-note" placeholder="選填">
     </div>
-    <div class="fg full" id="tx-stat-group">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--t2);white-space:nowrap;">
-        <input type="checkbox" id="tx-count-stat" checked style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;">
-        <span>計入個人支出統計</span>
-      </label>
+  </div>
+
+  <!-- 金額分配提示 -->
+  <div id="tx-alloc-bar" style="display:none;margin-top:8px;padding:8px 12px;background:var(--s2);border-radius:var(--r-xs);font-size:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="color:var(--t3);">已分配</span>
+      <span id="tx-alloc-total" style="font-family:var(--mono);font-weight:600;color:var(--yellow);">$0 / $0</span>
     </div>
   </div>
 
@@ -533,7 +545,7 @@ textarea{resize:vertical;min-height:56px;}
     <div class="div"></div>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px;">
       <input type="checkbox" id="tx-meal-check" onchange="onTxMealCheck()" style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0;">
-      <span>同時加入同事餐費</span>
+      <span>從同事餐費扣款（同事消費，餐費池-）</span>
     </label>
     <div id="tx-meal-rows" style="display:none;"></div>
     <button type="button" id="tx-meal-add-btn" onclick="addTxMealRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增人員</button>
@@ -544,7 +556,7 @@ textarea{resize:vertical;min-height:56px;}
     <div class="div"></div>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--yellow);">
       <input type="checkbox" id="tx-adv-check" onchange="onTxAdvCheck()" style="accent-color:var(--yellow);width:16px;height:16px;flex-shrink:0;">
-      <span>部分金額為代墊（等對方還）</span>
+      <span>部分金額為代墊（等對方還款）</span>
     </label>
     <div id="tx-adv-rows" style="display:none;margin-top:8px;"></div>
     <button type="button" id="tx-adv-add-btn" onclick="addTxAdvRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增代墊對象</button>
@@ -1372,6 +1384,7 @@ function openTxModal(){
   const today=new Date().toISOString().slice(0,10);
   document.getElementById('tx-date').value=today;
   document.getElementById('tx-total').value='';
+  document.getElementById('tx-mine').value='';
   document.getElementById('tx-item').value='';
   document.getElementById('tx-note').value='';
   document.getElementById('tx-count-stat').checked=true;
@@ -1386,6 +1399,7 @@ function openTxModal(){
   document.getElementById('tx-income-amt').value='';
   document.getElementById('tx-int-amt').value='';
   document.getElementById('tx-cc-amt').value='';
+  document.getElementById('tx-alloc-bar').style.display='none';
 
   const allPay=[...DB.settings.creditCards,...DB.settings.banks,'現金'];
   const payMethod=document.getElementById('tx-pay-method');
@@ -1409,8 +1423,46 @@ function openTxModal(){
     !['收入','代墊回款','內部轉帳','信用卡費','餐費扣款','零用金支出'].includes(c));
   catSel.innerHTML=expCats.map(c=>`<option>${c}</option>`).join('');
 
+  onTxStatChange();
   onTxPayChange();
   document.getElementById('modal-tx').classList.add('open');
+}
+
+function onTxTotalChange(){
+  const total=Number(document.getElementById('tx-total').value)||0;
+  const mine=document.getElementById('tx-mine');
+  if(!mine.value||Number(mine.value)>total) mine.value=total||'';
+  updateTxAlloc();
+}
+
+function onTxMineChange(){updateTxAlloc();}
+
+function onTxStatChange(){
+  const checked=document.getElementById('tx-count-stat').checked;
+  document.getElementById('tx-cat-group').style.display=checked?'block':'none';
+}
+
+function updateTxAlloc(){
+  const total=Number(document.getElementById('tx-total').value)||0;
+  if(!total){document.getElementById('tx-alloc-bar').style.display='none';return;}
+  document.getElementById('tx-alloc-bar').style.display='block';
+
+  const mine=Number(document.getElementById('tx-mine').value)||0;
+  let mealTotal=0,advTotal=0;
+  if(document.getElementById('tx-meal-check').checked){
+    [...document.getElementById('tx-meal-rows').children].forEach(row=>{
+      mealTotal+=Number(row.querySelector('input[type=number]').value)||0;
+    });
+  }
+  if(document.getElementById('tx-adv-check').checked){
+    [...document.getElementById('tx-adv-rows').children].forEach(row=>{
+      advTotal+=Number(row.querySelector('input[type=number]').value)||0;
+    });
+  }
+  const allocated=mine+mealTotal+advTotal;
+  const el=document.getElementById('tx-alloc-total');
+  el.textContent=`$${allocated.toLocaleString()} / $${total.toLocaleString()}`;
+  el.style.color=allocated===total?'var(--green)':allocated>total?'var(--red)':'var(--yellow)';
 }
 
 function onTxPayChange(){
@@ -1423,11 +1475,13 @@ function onTxPayChange(){
   document.getElementById('tx-internal-area').style.display=isInternal?'block':'none';
   document.getElementById('tx-ccfee-area').style.display=isCCFee?'block':'none';
   document.getElementById('tx-amt-group').style.display=isNormal?'block':'none';
-  document.getElementById('tx-cat-group').style.display=isNormal?'block':'none';
+  document.getElementById('tx-mine-group').style.display=isNormal?'block':'none';
+  document.getElementById('tx-cat-group').style.display=isNormal&&document.getElementById('tx-count-stat').checked?'block':'none';
   document.getElementById('tx-item-group').style.display=isNormal?'block':'none';
   document.getElementById('tx-stat-group').style.display=isNormal?'block':'none';
   document.getElementById('tx-meal-addon').style.display=isNormal?'block':'none';
   document.getElementById('tx-adv-addon').style.display=isNormal?'block':'none';
+  if(!isNormal) document.getElementById('tx-alloc-bar').style.display='none';
 }
 
 function onTxMealCheck(){
@@ -1435,6 +1489,7 @@ function onTxMealCheck(){
   document.getElementById('tx-meal-rows').style.display=checked?'block':'none';
   document.getElementById('tx-meal-add-btn').style.display=checked?'block':'none';
   if(checked&&document.getElementById('tx-meal-rows').children.length===0) addTxMealRow();
+  updateTxAlloc();
 }
 
 function onTxAdvCheck(){
@@ -1442,6 +1497,7 @@ function onTxAdvCheck(){
   document.getElementById('tx-adv-rows').style.display=checked?'block':'none';
   document.getElementById('tx-adv-add-btn').style.display=checked?'block':'none';
   if(checked&&document.getElementById('tx-adv-rows').children.length===0) addTxAdvRow();
+  updateTxAlloc();
 }
 
 function addTxMealRow(){
@@ -1451,9 +1507,9 @@ function addTxMealRow(){
     <select style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
       ${DB.settings.persons.map(p=>`<option>${p}</option>`).join('')}
     </select>
-    <input type="number" placeholder="金額" min="0"
+    <input type="number" placeholder="金額" min="0" oninput="updateTxAlloc()"
       style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-    <button type="button" onclick="this.parentElement.remove()"
+    <button type="button" onclick="this.parentElement.remove();updateTxAlloc()"
       style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;">×</button>`;
   document.getElementById('tx-meal-rows').appendChild(div);
 }
@@ -1468,9 +1524,9 @@ function addTxAdvRow(){
       style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
       ${allPersons.map(p=>`<option>${p}</option>`).join('')}
     </select>
-    <input type="number" placeholder="金額" min="0"
+    <input type="number" placeholder="金額" min="0" oninput="updateTxAlloc()"
       style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-    <button type="button" onclick="this.closest('.adv-row').remove()"
+    <button type="button" onclick="this.closest('.adv-row').remove();updateTxAlloc()"
       style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;">×</button>
     <input type="text" class="adv-name-inp" placeholder="對象姓名"
       style="display:none;grid-column:1/3;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">`;
@@ -1513,25 +1569,49 @@ function saveTx(){
   }
 
   // 一般支出
-  const amt=Number(document.getElementById('tx-total').value)||0;
+  const total=Number(document.getElementById('tx-total').value)||0;
+  const mine=Number(document.getElementById('tx-mine').value)||total;
   const cat=document.getElementById('tx-cat').value;
   const item=document.getElementById('tx-item').value;
   const countStat=document.getElementById('tx-count-stat').checked;
-  if(!amt){alert('請填金額');return;}
+  if(!total){alert('請填金額');return;}
 
+  // 計算餐費和代墊加總
+  let mealTotal=0,advTotal=0;
+  if(document.getElementById('tx-meal-check').checked){
+    [...document.getElementById('tx-meal-rows').children].forEach(row=>{
+      mealTotal+=Number(row.querySelector('input[type=number]').value)||0;
+    });
+  }
+  if(document.getElementById('tx-adv-check').checked){
+    [...document.getElementById('tx-adv-rows').children].forEach(row=>{
+      advTotal+=Number(row.querySelector('input[type=number]').value)||0;
+    });
+  }
+  const allocated=mine+mealTotal+advTotal;
+  if(allocated!==total){
+    if(!confirm(`分配金額 $${allocated} 不等於總金額 $${total}，確定繼續？`)) return;
+  }
+
+  // 主帳記錄
   DB.transactions.push({
     cat:countStat?cat:'不計統計',
-    date,item,note,amount:amt,payMethod:pay
+    date,item,note,amount:mine,payMethod:pay
   });
 
-  // 同時加入同事餐費
+  // 同時影響餐費（餐費池-）
   if(document.getElementById('tx-meal-check').checked){
     [...document.getElementById('tx-meal-rows').children].forEach(row=>{
       const who=row.querySelector('select').value;
-      const mAmt=Number(row.querySelector('input').value)||0;
+      const mAmt=Number(row.querySelector('input[type=number]').value)||0;
       if(!who||!mAmt) return;
-      DB.mealTxs.push({id:genId('M'),type:'charge',date,desc:item||note,
-        chargeWho:who,amount:mAmt,chargeMethod:'僅餐費'});
+      // 主帳記餐費扣款
+      DB.transactions.push({
+        cat:'餐費扣款',date,item:`${who} 餐費`,note,amount:mAmt,payMethod:pay
+      });
+      // 餐費明細
+      DB.mealTxs.push({id:genId('M'),type:'split',date,desc:item||note,
+        payer:'申瑋',payerTotal:mAmt,amount:mAmt,debtors:[{who,amt:mAmt}]});
     });
   }
 
@@ -1542,6 +1622,10 @@ function saveTx(){
       const whoName=whoSel==='其他'?(row.querySelector('.adv-name-inp')?.value||'其他'):whoSel;
       const aAmt=Number(row.querySelector('input[type=number]').value)||0;
       if(!whoName||!aAmt) return;
+      // 主帳記代墊款
+      DB.transactions.push({
+        cat:'代墊款',date,item:`代墊-${whoName}`,note,amount:aAmt,payMethod:pay
+      });
       DB.advances.push({id:Date.now()+Math.random(),date,who:whoName,amount:aAmt,desc:item||note,settled:false});
     });
   }
