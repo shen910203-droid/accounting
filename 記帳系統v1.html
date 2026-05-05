@@ -2256,4 +2256,41 @@ function toggleSection(bodyId,cbId){
   const body=document.getElementById(bodyId);
   const cb=document.getElementById(cbId);
   const open=cb.checked;
-  body.classList.toggle('open
+  body.classList.toggle('open',open);
+}
+
+function toggleNavMenu(){
+  const menu=document.getElementById('nav-menu');
+  menu.style.display=menu.style.display==='none'?'block':'none';
+}
+
+document.addEventListener('click',e=>{
+  const btn=document.getElementById('nav-menu-btn');
+  const menu=document.getElementById('nav-menu');
+  if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
+    menu.style.display='none';
+  }
+});
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function exportData(){
+  downloadFile('記帳備份_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(DB,null,2),'application/json');
+}
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{try{DB=JSON.parse(ev.target.result);save();renderOverview();alert('匯入成功！');}catch{alert('格式錯誤');}};
+  reader.readAsText(file);
+}
+function downloadFile(name,content,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;a.click();
+}
+
+// ── INIT ──
+loadFromCloud();
+</script>
+</body>
+</html>
