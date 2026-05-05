@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050516</div>
+  <div class="nav-brand">⬡ 記帳 v050517</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -1797,7 +1797,7 @@ function renderMealList(){
     const ri=DB.mealTxs.length-1-i;
     let detail='';
     if(tx.type==='charge'){
-      const method=tx.chargeMethod==='僅餐費'?'我出錢存入':tx.chargeMethod;
+      const method=tx.chargeMethod==='僅餐費'?'零用金轉入':tx.chargeMethod;
       detail=`${tx.chargeWho} 儲值（${method}）`;
     }
     else if(tx.type==='split'){
@@ -2058,6 +2058,7 @@ function calcPayerTotal(){
 function genId(prefix){
   const today=new Date().toISOString().slice(2,10).replace(/-/g,'');
   const arr=prefix==='M'?DB.mealTxs:DB.pettyTxs;
+  // 計算今天已有幾筆（包含剛剛push但還沒存的）
   const todayCount=arr.filter(t=>t.id&&t.id.startsWith(prefix+today)).length;
   const seq=String(todayCount+1).padStart(2,'0');
   return `${prefix}${today}${seq}`;
@@ -2251,7 +2252,7 @@ function savePettyTx(){
   }
 
   save();closeModal('modal-petty');renderPetty();renderOverview();
-  resetLedgerFilters();renderLedger();
+  resetLedgerFilters();renderLedger();renderMeal();
 }
 
 function delPettyTx(idx){
