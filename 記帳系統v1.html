@@ -215,10 +215,15 @@ textarea{resize:vertical;min-height:56px;}
   </div>
   <div class="nav-right">
     <span id="sync-status" style="font-size:11px;color:var(--t2);margin-right:4px;"></span>
-    <button class="btn-xs" onclick="openBackupModal()">🗂 備份/還原</button>
-    <button class="btn-xs" onclick="archiveYear()">📦 年度封存</button>
-    <button class="btn-xs" onclick="exportData()">匯出</button>
-    <button class="btn-xs" onclick="document.getElementById('imp').click()">匯入</button>
+    <div style="position:relative;">
+      <button class="btn-xs" onclick="toggleNavMenu()" id="nav-menu-btn">⋯</button>
+      <div id="nav-menu" style="display:none;position:absolute;right:0;top:36px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px;z-index:999;min-width:130px;box-shadow:0 8px 24px rgba(0,0,0,.4);">
+        <button onclick="openBackupModal();toggleNavMenu()" style="display:block;width:100%;text-align:left;padding:7px 12px;border:none;background:none;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">🗂 備份/還原</button>
+        <button onclick="archiveYear();toggleNavMenu()" style="display:block;width:100%;text-align:left;padding:7px 12px;border:none;background:none;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">📦 年度封存</button>
+        <button onclick="exportData();toggleNavMenu()" style="display:block;width:100%;text-align:left;padding:7px 12px;border:none;background:none;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">📤 匯出</button>
+        <button onclick="document.getElementById('imp').click();toggleNavMenu()" style="display:block;width:100%;text-align:left;padding:7px 12px;border:none;background:none;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">📥 匯入</button>
+      </div>
+    </div>
     <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(event)">
   </div>
 </nav>
@@ -2052,6 +2057,18 @@ function toggleSection(bodyId,cbId){
   const open=cb.checked;
   body.classList.toggle('open',open);
 }
+
+function toggleNavMenu(){
+  const menu=document.getElementById('nav-menu');
+  menu.style.display=menu.style.display==='none'?'block':'none';
+}
+document.addEventListener('click',e=>{
+  const btn=document.getElementById('nav-menu-btn');
+  const menu=document.getElementById('nav-menu');
+  if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
+    menu.style.display='none';
+  }
+});
 
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>{
