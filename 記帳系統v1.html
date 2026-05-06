@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050518</div>
+  <div class="nav-brand">⬡ 記帳 v050519</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -1275,7 +1275,6 @@ function renderLedger(){
       </div>
       ${amtStr}
       <div class="tx-pay">${payStr}</div>
-      <button class="tx-del" style="color:var(--t2);font-size:13px;" onclick="editTx(${realIdx})" title="編輯">✎</button>
       <button class="tx-del" onclick="delTx(${realIdx})" title="刪除">×</button>
     </div>`;
   }).join('');
@@ -1284,97 +1283,21 @@ function renderLedger(){
   if(lm) lm.style.display=allTxs.length>ledgerShowing?'block':'none';
 }
 
-function editTx(idx){
-  const tx=DB.transactions[idx];
-  if(!tx) return;
-  // 刪除舊的，開啟新增 Modal 預填資料
-  DB.transactions.splice(idx,1);
-  save();
-  openTxModal();
-  // 預填基本資料
-  document.getElementById('tx-date').value=tx.date||'';
-  document.getElementById('tx-note').value=tx.note||'';
-  // 預填支付方式
-  if(tx.payMethod) document.getElementById('tx-pay-method').value=tx.payMethod;
-  onTxPayChange();
-  // 預填金額
-  if(tx.cat==='內部轉帳'){
-    document.getElementById('tx-int-amt').value=tx.intAmt||'';
-    document.getElementById('tx-int-from').value=tx.intFrom||'';
-    document.getElementById('tx-int-to').value=tx.intTo||'';
-  } else if(tx.cat==='信用卡費'){
-    document.getElementById('tx-cc-card').value=tx.ccCard||'';
-    document.getElementById('tx-cc-amt').value=tx.ccAmt||'';
-    document.getElementById('tx-cc-from').value=tx.ccFrom||'';
-  } else if(tx.cat==='收入'){
-    document.getElementById('tx-income-amt').value=tx.amount||'';
-    document.getElementById('tx-income-acc').value=tx.payMethod||'';
-  } else {
-    document.getElementById('tx-total').value=tx.amount||'';
-    // 清空預設的明細列，重新填
-    document.getElementById('tx-split-rows').innerHTML='';
-    addSplitRow();
-    const row=document.querySelector('.split-row');
-    if(row){
-      row.querySelector('.split-type').value='expense';
-      onSplitTypeChange(row.querySelector('.split-type'));
-      row.querySelector('.split-amt').value=tx.amount||'';
-      if(tx.cat&&row.querySelector('.split-cat')) row.querySelector('.split-cat').value=tx.cat;
-      if(tx.item&&row.querySelector('.split-desc')) row.querySelector('.split-desc').value=tx.item;
-    }
-    updateSplitTotal();
-  }
-}
-
-function editMealTx(idx){
-  const tx=DB.mealTxs[idx];
-  if(!tx) return;
-  DB.mealTxs.splice(idx,1);
-  save();
-  openMealModal();
-  // 預填
-  document.getElementById('m-date').value=tx.date||'';
-  document.getElementById('m-type').value=tx.type||'charge';
-  document.getElementById('m-desc').value=tx.desc||'';
-  onMealTypeChange();
-  if(tx.type==='charge'){
-    document.getElementById('m-charge-who').value=tx.chargeWho||'';
-    document.getElementById('m-charge-amt').value=tx.amount||'';
-    document.getElementById('m-charge-method').value=tx.chargeMethod||'現金';
-    onMealChargeMethodChange();
-  } else if(tx.type==='repay'){
-    document.getElementById('m-repay-who').value=tx.repayWho||'';
-    document.getElementById('m-repay-amt').value=tx.amount||'';
-    document.getElementById('m-repay-method').value=tx.repayMethod||'現金';
-  } else if(tx.type==='split'){
-    document.getElementById('m-payer').value=tx.payer||'';
-    document.getElementById('m-debtor-rows').innerHTML='';
-    (tx.debtors||[]).forEach(d=>{ addDebtorRow(); const rows=document.getElementById('m-debtor-rows').children; const row=rows[rows.length-1]; row.querySelector('select').value=d.who; row.querySelector('input').value=d.amt; });
-    calcPayerTotal();
-  }
-}
-
-function editPettyTx(idx){
-  const tx=DB.pettyTxs[idx];
-  if(!tx) return;
-  DB.pettyTxs.splice(idx,1);
-  save();
-  openPettyModal();
-  // 預填
-  document.getElementById('p-date').value=tx.date||'';
-  document.getElementById('p-type').value=tx.type||'in';
-  document.getElementById('p-desc').value=tx.desc||'';
-  document.getElementById('p-amt').value=tx.amount||'';
-  document.getElementById('p-payer').value=tx.payer||'';
-  document.getElementById('p-repay').value=tx.repay||'';
-  document.getElementById('p-note').value=tx.note||'';
-  onPettyTypeChange();
-  if(tx.inBank) document.getElementById('p-in-bank').value=tx.inBank;
-  if(tx.outPay) document.getElementById('p-out-pay').value=tx.outPay;
-}
-
 function delTx(idx){
   if(!confirm('確定刪除這筆記錄？')) return;
+  const tx=DB.transactions[idx];
+  // 如果是餐費扣款，同步刪除對應餐費明細
+  if(tx&&tx.cat==='餐費扣款'&&tx._mealSync){
+    const mi=DB.mealTxs.findIndex(m=>m.date===tx.date&&m.type==='split'&&
+      m.debtors&&m.debtors[0]&&m.debtors[0].who===tx.item?.replace(' 餐費',''));
+    if(mi!==-1) DB.mealTxs.splice(mi,1);
+  }
+  // 如果是代墊款，同步刪除代墊追蹤
+  if(tx&&tx.cat==='代墊款'){
+    const whoName=tx.item?.replace('代墊-','');
+    const ai=DB.advances.findIndex(a=>a.date===tx.date&&a.who===whoName&&!a.settled);
+    if(ai!==-1) DB.advances.splice(ai,1);
+  }
   DB.transactions.splice(idx,1);
   save(); resetLedgerFilters(); renderLedger(); renderOverview();
 }
@@ -1815,7 +1738,6 @@ function renderMealList(){
         ${tx.desc?`<div style="font-size:12px;color:var(--t2);margin-top:3px;background:var(--s2);display:inline-block;padding:1px 7px;border-radius:4px;">📝 ${tx.desc}</div>`:''}
       </div>
       <span class="tx-amt" style="color:var(--t2);white-space:nowrap;">$${Number(tx.amount||tx.payerTotal||0).toLocaleString()}</span>
-      <button class="tx-del" style="color:var(--t2);font-size:13px;" onclick="editMealTx(${ri})" title="編輯">✎</button>
       <button class="tx-del" onclick="delMealTx(${ri})">×</button>
     </div>`;
   }).join('');
@@ -2107,7 +2029,14 @@ function saveMealTx(){
 
 function delMealTx(idx){
   if(!confirm('確定刪除？'))return;
-  DB.mealTxs.splice(idx,1);save();renderMeal();renderOverview();
+  const tx=DB.mealTxs[idx];
+  // 如果是扣款，同步刪除主帳對應記錄
+  if(tx&&tx.type==='split'){
+    const ti=DB.transactions.findIndex(t=>t.cat==='餐費扣款'&&t.date===tx.date&&t._mealSync);
+    if(ti!==-1) DB.transactions.splice(ti,1);
+  }
+  DB.mealTxs.splice(idx,1);
+  save();renderMeal();renderOverview();resetLedgerFilters();renderLedger();
 }
 
 let ledgerShowing=50;
@@ -2179,8 +2108,6 @@ function renderPetty(){
           ${tx.note?`<div style="font-size:11px;color:var(--t3);margin-top:2px;">${tx.note}</div>`:''}
         </div>
         <span class="tx-amt ${isOut?'out':'in'}" style="white-space:nowrap;">${isOut?'-':'+'}$${Number(tx.amount).toLocaleString()}</span>
-        ${tx.repay?`<span style="font-size:11px;color:var(--accent2);white-space:nowrap;background:rgba(232,132,90,.15);padding:2px 7px;border-radius:4px;">${tx.repay}</span>`:'<span></span>'}
-        <button class="tx-del" style="color:var(--t2);font-size:13px;" onclick="editPettyTx(${ri})" title="編輯">✎</button>
         <button class="tx-del" onclick="delPettyTx(${ri})">×</button>
       </div>
     </div>`;
@@ -2323,8 +2250,15 @@ let currentAdvId=null;
 
 function delAdv(idx){
   if(!confirm('確定刪除這筆代墊記錄？')) return;
+  const adv=DB.advances[idx];
+  // 同步刪除主帳代墊款記錄
+  if(adv){
+    const ti=DB.transactions.findIndex(t=>t.cat==='代墊款'&&t.date===adv.date&&
+      t.item===`代墊-${adv.who}`);
+    if(ti!==-1) DB.transactions.splice(ti,1);
+  }
   DB.advances.splice(idx,1);
-  save(); renderAdvance();
+  save(); renderAdvance(); renderOverview(); resetLedgerFilters(); renderLedger();
 }
 
 function clearAllData(){
