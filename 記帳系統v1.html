@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050519</div>
+  <div class="nav-brand">⬡ 記帳 v050520</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -1369,7 +1369,7 @@ function openTxModal(){
 function onTxTotalChange(){
   const total=Number(document.getElementById('tx-total').value)||0;
   const mine=document.getElementById('tx-mine');
-  if(!mine.value||Number(mine.value)>total) mine.value=total||'';
+  if(mine.value===''||Number(mine.value)>total) mine.value=total||'';
   updateTxAlloc();
 }
 
@@ -1535,7 +1535,8 @@ function saveTx(){
 
   // 一般支出
   const total=Number(document.getElementById('tx-total').value)||0;
-  const mine=Number(document.getElementById('tx-mine').value)||total;
+  const mineEl=document.getElementById('tx-mine');
+  const mine=mineEl.value===''?total:Number(mineEl.value);
   const cat=document.getElementById('tx-cat').value;
   const item=document.getElementById('tx-item').value;
   const countStat=document.getElementById('tx-count-stat').checked;
