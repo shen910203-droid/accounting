@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050523</div>
+  <div class="nav-brand">⬡ 記帳 v050524</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -1587,7 +1587,7 @@ function saveTx(){
       const who=row.querySelector('select').value;
       const mAmt=Number(row.querySelector('input[type=number]').value)||0;
       if(!who||!mAmt) return;
-      DB.transactions.push({cat:'餐費扣款',date,item:`${who} 餐費`,note,amount:mAmt,payMethod:pay});
+      DB.transactions.push({cat:'餐費扣款',date,item:`${who} 餐費`,note,amount:mAmt,payMethod:pay,_mealSync:true});
       DB.mealTxs.push({id:genId('M'),type:'split',date,desc:item||note,
         payer:'申瑋',payerTotal:mAmt,amount:mAmt,debtors:[{who,amt:mAmt}]});
     });
