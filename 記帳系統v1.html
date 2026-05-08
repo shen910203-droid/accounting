@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050520</div>
+  <div class="nav-brand">⬡ 記帳 v050522</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -639,7 +639,7 @@ textarea{resize:vertical;min-height:56px;}
     <div class="form-grid mb8">
       <div class="fg">
         <label class="fl">墊款人（付錢的）</label>
-        <select id="m-payer"></select>
+        <select id="m-payer" onchange="onMealPayerChange()"></select>
       </div>
       <div class="fg">
         <label class="fl">墊款總金額（自動）</label>
@@ -649,10 +649,21 @@ textarea{resize:vertical;min-height:56px;}
     <div class="text-muted mb8">欠款人（誰欠錢，各欠多少）：</div>
     <div id="m-debtor-rows"></div>
     <button type="button" onclick="addDebtorRow()" class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:12px;">＋ 新增欠款人</button>
+    <!-- 申瑋欠款時：可選計入支出統計 -->
+    <div id="m-stat-group" style="display:none;margin-top:10px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--t2);">
+        <input type="checkbox" id="m-count-stat" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;">
+        <span>計入個人支出統計（只有池子變動，帳戶不動）</span>
+      </label>
+      <div class="fg" id="m-stat-cat-group" style="display:none;margin-top:8px;">
+        <label class="fl">類別</label>
+        <select id="m-stat-cat"></select>
+      </div>
+    </div>
     <div class="text-muted mt8" style="line-height:1.6;">
       ※ 墊款人選「申瑋」→ 從我個人池扣，餐費池+欠款人金額<br>
       ※ 墊款人選「零用金」→ 零用金池-，餐費池+欠款人金額<br>
-      ※ 欠款人選「申瑋」→ 我個人池-，餐費池不變
+      ※ 欠款人選「申瑋」→ 我個人池-，餐費池不變，可選計入統計
     </div>
   </div>
 
@@ -1938,6 +1949,18 @@ function openMealModal(){
   document.getElementById('m-repay-bank').innerHTML=banks.map(b=>`<option>${b}</option>`).join('');
 
   onMealChargeMethodChange();
+  // 填入統計類別
+  const statCat=document.getElementById('m-stat-cat');
+  if(statCat){
+    const expCats=DB.settings.categories.filter(c=>
+      !['收入','代墊回款','內部轉帳','信用卡費','餐費扣款','零用金支出'].includes(c));
+    statCat.innerHTML=expCats.map(c=>`<option>${c}</option>`).join('');
+  }
+  const statGroup=document.getElementById('m-stat-group');
+  if(statGroup) statGroup.style.display='none';
+  const countStat=document.getElementById('m-count-stat');
+  if(countStat) countStat.checked=false;
+
   addDebtorRow();
   onMealTypeChange();
   document.getElementById('modal-meal').classList.add('open');
@@ -1947,6 +1970,19 @@ function onMealChargeMethodChange(){
   const m=document.getElementById('m-charge-method').value;
   document.getElementById('m-charge-bank-group').style.display=m==='轉帳'?'block':'none';
   document.getElementById('m-charge-cc-group').style.display=m==='刷卡'?'block':'none';
+}
+
+function onMealPayerChange(){
+  // 欠款人選「申瑋」時顯示統計選項
+  checkMealStatVisibility();
+}
+
+function checkMealStatVisibility(){
+  // 檢查欠款人是否包含申瑋
+  const debtorRows=[...document.getElementById('m-debtor-rows').children];
+  const hasMe=debtorRows.some(row=>row.querySelector('select')?.value==='申瑋');
+  const statGroup=document.getElementById('m-stat-group');
+  if(statGroup) statGroup.style.display=hasMe?'block':'none';
 }
 
 function onMealTypeChange(){
@@ -1961,14 +1997,16 @@ function addDebtorRow(){
   const div=document.createElement('div');
   div.style='display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:center;';
   div.innerHTML=`
-    <select style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+    <select onchange="calcPayerTotal();checkMealStatVisibility()"
+      style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
       ${allPersons.map(p=>`<option>${p}</option>`).join('')}
     </select>
     <input type="number" placeholder="金額" min="0" oninput="calcPayerTotal()"
       style="background:var(--s2);border:1px solid var(--border);color:var(--red);padding:6px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-    <button type="button" onclick="this.parentElement.remove();calcPayerTotal()"
+    <button type="button" onclick="this.parentElement.remove();calcPayerTotal();checkMealStatVisibility()"
       style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;">×</button>`;
   document.getElementById('m-debtor-rows').appendChild(div);
+  checkMealStatVisibility();
 }
 
 function calcPayerTotal(){
@@ -2016,6 +2054,17 @@ function saveMealTx(){
     // 零用金支出標記
     if(tx.payer==='零用金') tx.fromPetty=true;
     tx.debtors.forEach(d=>{ if(d.fromPetty===undefined) d.fromPetty=tx.fromPetty||false; });
+
+    // 欠款人含申瑋且勾選計入統計 → 記一筆支出（只有池子變動，帳戶不動）
+    const meDebtor=tx.debtors.find(d=>d.who==='申瑋');
+    if(meDebtor && document.getElementById('m-count-stat')?.checked){
+      const cat=document.getElementById('m-stat-cat')?.value||'飲食';
+      // 記一筆「不影響帳戶」的支出統計
+      DB.transactions.push({
+        cat,date:tx.date,item:tx.desc||'餐費',note:'',
+        amount:meDebtor.amt,payMethod:'__pool__',_poolOnly:true
+      });
+    }
   } else if(type==='repay'){
     tx.repayWho=document.getElementById('m-repay-who').value;
     tx.amount=Number(document.getElementById('m-repay-amt').value)||0;
@@ -2175,7 +2224,8 @@ function savePettyTx(){
       desc:`零用金轉入，代墊${tx.desc||''}`,
       chargeWho:tx.payer,
       amount:Number(tx.amount),
-      chargeMethod:'僅餐費'
+      chargeMethod:'僅餐費',
+      fromPetty:true
     });
   }
 
