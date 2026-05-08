@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050524</div>
+  <div class="nav-brand">⬡ 記帳 v050525</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -2085,6 +2085,11 @@ function delMealTx(idx){
     const ti=DB.transactions.findIndex(t=>t.cat==='餐費扣款'&&t.date===tx.date&&t._mealSync);
     if(ti!==-1) DB.transactions.splice(ti,1);
   }
+  // 如果是「存入同事餐費」產生的charge（僅餐費），同步刪除主帳支出
+  if(tx&&tx.type==='charge'&&tx.chargeMethod==='僅餐費'&&!tx.fromPetty){
+    const ti=DB.transactions.findIndex(t=>t.date===tx.date&&t.item===`${tx.chargeWho} 餐費儲值`);
+    if(ti!==-1) DB.transactions.splice(ti,1);
+  }
   DB.mealTxs.splice(idx,1);
   save();renderMeal();renderOverview();resetLedgerFilters();renderLedger();
 }
@@ -2243,7 +2248,7 @@ function delPettyTx(idx){
     if(mi!==-1) DB.mealTxs.splice(mi,1);
   }
   DB.pettyTxs.splice(idx,1);
-  save();renderPetty();renderOverview();renderMeal();
+  save();renderPetty();renderOverview();renderMeal();resetLedgerFilters();renderLedger();
 }
 
 function exportPettyReport(){
