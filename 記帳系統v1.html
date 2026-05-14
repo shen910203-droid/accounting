@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v050525</div>
+  <div class="nav-brand">⬡ 記帳 v051427</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -1253,13 +1253,8 @@ function renderLedger(){
     let amtStr='', payStr='', catLabel=tx.cat||'';
 
     if(tx.cat==='內部轉帳'){
-      if(tx._advRepay){
-        amtStr=`<span class="tx-amt in">+$${Number(tx.intAmt||0).toLocaleString()}</span>`;
-        payStr=tx.intTo;
-      } else {
-        amtStr=`<span class="tx-amt neutral">⇄ $${Number(tx.intAmt||0).toLocaleString()}</span>`;
-        payStr=`${tx.intFrom}→${tx.intTo}`;
-      }
+      amtStr=`<span class="tx-amt neutral">⇄ $${Number(tx.intAmt||0).toLocaleString()}</span>`;
+      payStr=`${tx.intFrom}→${tx.intTo}`;
     } else if(tx.cat==='信用卡費'){
       amtStr=`<span class="tx-amt neutral">繳 $${Number(tx.ccAmt||0).toLocaleString()}</span>`;
       payStr=tx.ccCard;
@@ -2397,9 +2392,9 @@ function saveAdvRepay(){
     // 現金或轉帳還我 → 只影響我的帳戶，不算收入不算支出
     // 用一個特殊的內部記錄
     DB.transactions.push({
-      cat:'內部轉帳',date,item:`代墊回款—${adv.who}`,note:adv.desc,
-      intAmt:amt,intFrom:'__代墊回款__',intTo:method==='現金'?'現金':bank,
-      amount:amt,_advRepay:true
+      cat:'代墊回款',date,item:`代墊回款—${adv.who}`,note:adv.desc,
+      amount:amt,payMethod:method==='現金'?'現金':bank,
+      _advRepay:true
     });
   }
   save();closeModal('modal-adv-repay');renderAdvance();renderOverview();
