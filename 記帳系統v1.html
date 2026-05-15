@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:56px;}
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v051427</div>
+  <div class="nav-brand">⬡ 記帳 v051428</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -2290,8 +2290,13 @@ function exportPettyReport(){
   const tOut=filtered.filter(t=>!['in','fine','pool-only'].includes(t.type)).reduce((a,t)=>a+Number(t.amount),0);
   rows.push(['合計','','','',Math.round(tIn),Math.round(tOut),Math.round(bal),'','','']);
 
-  const tsv=rows.map(r=>r.map(c=>String(c)).join('\t')).join('\r\n');
-  downloadFile(`零用金報表_${start}_${end}.xls`,'\ufeff'+tsv,'application/vnd.ms-excel');
+  // 用逗號分隔，Excel 可以正確分欄
+  const csv=rows.map(r=>r.map(c=>{
+    const s=String(c);
+    // 如果含逗號、引號或換行，用雙引號包起來
+    return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s.replace(/"/g,'""')}"`  :s;
+  }).join(',')).join('\r\n');
+  downloadFile(`零用金報表_${start}_${end}.csv`,'\ufeff'+csv,'text/csv');
 }
 
 // ════════════════════════════════════════════════════
