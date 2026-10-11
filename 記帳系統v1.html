@@ -2,498 +2,380 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>申瑋記帳</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aiden 記帳</title>
 <style>
 :root {
-  --bg:#0f0f13; --s1:#18181f; --s2:#22222d; --s3:#2a2a38;
-  --border:#2e2e3d; --border2:#3a3a50;
-  --accent:#7c6af7; --accent2:#e8845a; --accent3:#4ecb8d; --accent4:#e85a7a;
-  --text:#e8e8f0; --t2:#9090a8; --t3:#5a5a72;
-  --green:#4ecb8d; --red:#e85a7a; --blue:#7c9ef7; --yellow:#f7c86a; --orange:#e8845a;
-  --font:'Noto Sans TC',sans-serif; --mono:'DM Mono',monospace;
-  --r:12px; --r-sm:8px; --r-xs:6px;
+  --bg:     #0f0f1a;
+  --s1:     #16162a;
+  --s2:     #1e1e35;
+  --s3:     #262640;
+  --border: #2e2e50;
+  --text:   #e8e8f0;
+  --t2:     #a0a0c0;
+  --t3:     #606080;
+  --accent: #7c6af7;
+  --green:  #4ecb8d;
+  --red:    #e85a7a;
+  --yellow: #f7c86a;
+  --blue:   #5ab4f7;
+  --orange: #f7a05a;
+  --r:      12px;
+  --r-sm:   8px;
+  --r-xs:   6px;
+  --font:   -apple-system, BlinkMacSystemFont, 'Arial', sans-serif;
+  --mono:   'SF Mono', 'Consolas', monospace;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
 
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:200;height:52px;
-  background:rgba(15,15,19,.95);backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;padding:0 16px;}
-.nav-brand{font-weight:700;font-size:14px;color:var(--accent);letter-spacing:.08em;}
-.nav-tabs{display:flex;gap:2px;overflow-x:auto;}
-.nav-tab{flex-shrink:0;padding:5px 12px;border-radius:var(--r-xs);border:none;
-  background:transparent;color:var(--t2);font-family:var(--font);font-size:12px;cursor:pointer;transition:all .15s;}
-.nav-tab:hover{background:var(--s2);color:var(--text);}
-.nav-tab.active{background:var(--accent);color:#fff;}
-.nav-right{display:flex;gap:6px;}
-.btn-xs{padding:5px 10px;border-radius:var(--r-xs);border:1px solid var(--border);
-  background:var(--s2);color:var(--t2);font-family:var(--font);font-size:11px;cursor:pointer;transition:all .15s;}
-.btn-xs:hover{border-color:var(--accent);color:var(--accent);}
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: var(--s1); border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  display: flex; align-items: center; gap: 12px;
+  height: 52px;
+}
+.nav-brand { font-weight: 700; font-size: 13px; color: var(--accent); letter-spacing: .06em; white-space: nowrap; }
+.nav-tabs { display: flex; gap: 2px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab {
+  background: none; border: none; color: var(--t3); cursor: pointer;
+  padding: 6px 10px; border-radius: var(--r-xs); font-family: var(--font);
+  font-size: 12px; white-space: nowrap; transition: all .15s;
+}
+.nav-tab:hover { color: var(--t2); background: var(--s2); }
+.nav-tab.active { color: var(--text); background: var(--accent); font-weight: 600; }
+.sync-status { font-size: 11px; color: var(--t3); white-space: nowrap; }
+.sync-status.ok { color: var(--green); }
+.sync-status.warn { color: var(--yellow); }
+.sync-status.err { color: var(--red); }
 
-/* MAIN */
-main{margin-top:52px;padding:20px 16px;max-width:1100px;margin-left:auto;margin-right:auto;margin-top:68px;}
-.page{display:none;}.page.active{display:block;}
+/* PAGES */
+.page { display: none; padding: 68px 16px 80px; max-width: 900px; margin: 0 auto; }
+.page.active { display: block; }
 
 /* CARDS */
-.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:18px;}
-.card+.card{margin-top:12px;}
-.card-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:14px;}
+.card { background: var(--s1); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; margin-bottom: 12px; }
+.card-title { font-size: 12px; color: var(--t3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
 
-/* STAT CARDS */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;}
-.stat{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;position:relative;overflow:hidden;}
-.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
-.stat.green::before{background:var(--green);}
-.stat.red::before{background:var(--red);}
-.stat.blue::before{background:var(--blue);}
-.stat.orange::before{background:var(--orange);}
-.stat.purple::before{background:var(--accent);}
-.stat.yellow::before{background:var(--yellow);}
-.stat-label{font-size:10px;color:var(--t3);margin-bottom:5px;letter-spacing:.04em;}
-.stat-val{font-family:var(--mono);font-size:18px;font-weight:500;}
-.stat-val.green{color:var(--green);}
-.stat-val.red{color:var(--red);}
-.stat-val.blue{color:var(--blue);}
-.stat-val.orange{color:var(--orange);}
-.stat-val.purple{color:var(--accent);}
-.stat-val.yellow{color:var(--yellow);}
-
-/* BUTTONS */
-.btn{padding:8px 16px;border-radius:var(--r-xs);border:none;font-family:var(--font);font-size:13px;cursor:pointer;font-weight:500;transition:opacity .15s;}
-.btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{opacity:.85;}
-.btn-danger{background:rgba(232,90,122,.15);color:var(--red);border:1px solid rgba(232,90,122,.3);}
-.btn-danger:hover{background:rgba(232,90,122,.25);}
-.btn-ghost{background:var(--s2);color:var(--t2);border:1px solid var(--border);}
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+/* SUMMARY GRID */
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.sum-card {
+  background: var(--s1); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 14px; position: relative; overflow: hidden;
+}
+.sum-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.sum-card.tw::before { background: var(--accent); }
+.sum-card.au::before { background: var(--blue); }
+.sum-card.red::before { background: var(--red); }
+.sum-card.green::before { background: var(--green); }
+.sum-label { font-size: 10px; color: var(--t3); margin-bottom: 6px; }
+.sum-val { font-size: 20px; font-weight: 700; font-family: var(--mono); }
+.sum-val.tw { color: var(--accent); }
+.sum-val.au { color: var(--blue); }
+.sum-val.neg { color: var(--red); }
+.sum-val.pos { color: var(--green); }
+.sum-currency { font-size: 10px; color: var(--t3); margin-top: 2px; }
 
 /* SECTION HEADER */
-.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
-.sh-title{font-size:17px;font-weight:700;}
-
-/* FORM */
-.fg{display:flex;flex-direction:column;gap:5px;}
-.fl{font-size:10px;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;}
-input,select,textarea{background:var(--s2);border:1px solid var(--border);color:var(--text);
-  padding:8px 11px;border-radius:var(--r-xs);font-family:var(--font);font-size:13px;outline:none;width:100%;}
-input:focus,select:focus,textarea:focus{border-color:var(--accent);}
-input[readonly]{color:var(--yellow);background:var(--s3);}
-textarea{resize:vertical;min-height:56px;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.fg.full{grid-column:1/-1;}
-.form-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-
-/* TOGGLE SECTION */
-.toggle-section{border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;margin-top:4px;}
-.toggle-header{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:var(--s2);}
-.toggle-header:hover{background:var(--s3);}
-.toggle-check{accent-color:var(--accent);width:15px;height:15px;}
-.toggle-label{font-size:13px;font-weight:500;}
-.toggle-body{padding:14px;display:none;border-top:1px solid var(--border);}
-.toggle-body.open{display:block;}
-
-/* TX LIST */
-.tx-list{display:flex;flex-direction:column;gap:5px;}
-.tx-row{background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);
-  padding:11px 14px;display:grid;align-items:center;gap:10px;transition:border-color .15s;cursor:default;}
-.tx-row:hover{border-color:var(--accent);}
-.tx-row.main-row{grid-template-columns:76px 90px 1fr auto auto auto;}
-.tx-date{font-family:var(--mono);font-size:11px;color:var(--t3);}
-.tx-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:500;}
-.tx-desc{font-size:13px;}
-.tx-sub{font-size:11px;color:var(--t3);margin-top:2px;}
-.tx-amt{font-family:var(--mono);font-size:13px;font-weight:500;text-align:right;white-space:nowrap;}
-.tx-amt.out{color:var(--red);}
-.tx-amt.in{color:var(--green);}
-.tx-amt.neutral{color:var(--blue);}
-.tx-pay{font-size:11px;color:var(--t3);text-align:right;}
-.tx-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:1px 5px;border-radius:4px;}
-.tx-del:hover{color:var(--red);background:rgba(232,90,122,.1);}
-.sub-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;margin-right:3px;margin-top:2px;}
-.sub-tag.meal{background:rgba(124,110,247,.15);color:var(--accent);}
-.sub-tag.petty{background:rgba(232,132,90,.15);color:var(--orange);}
-.sub-tag.adv{background:rgba(247,200,106,.15);color:var(--yellow);}
-
-/* BADGE COLORS */
-.b-飲食{background:rgba(78,203,141,.15);color:var(--green);}
-.b-交通{background:rgba(124,110,247,.15);color:var(--accent);}
-.b-娛樂{background:rgba(232,132,90,.15);color:var(--orange);}
-.b-購物{background:rgba(247,200,106,.15);color:var(--yellow);}
-.b-服飾{background:rgba(232,90,122,.15);color:var(--red);}
-.b-雜支{background:rgba(144,144,168,.15);color:var(--t2);}
-.b-醫療{background:rgba(78,160,203,.15);color:#4ea0cb;}
-.b-居住{background:rgba(160,124,247,.15);color:#a07cf7;}
-.b-收入{background:rgba(78,203,141,.2);color:var(--green);}
-.b-內部轉帳{background:rgba(124,158,247,.15);color:var(--blue);}
-.b-代墊款{background:rgba(247,200,106,.2);color:var(--yellow);}
-.b-代墊回款{background:rgba(78,203,141,.2);color:var(--green);}
-.b-信用卡費{background:rgba(232,90,122,.15);color:var(--red);}
-
-/* MODAL */
-.modal-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.75);
-  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;}
-.modal-overlay.open{display:flex;}
-.modal{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
-  padding:22px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;}
-.modal-title{font-size:15px;font-weight:700;margin-bottom:18px;}
-.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
-
-/* PERSON CARDS - 平均分布 */
-.person-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
-.person-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
-  padding:14px;text-align:center;}
-.person-card.pool-card{border-color:var(--accent);grid-column:1/-1;}
-.person-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;
-  justify-content:center;font-size:16px;margin:0 auto 8px;}
-.person-name{font-size:13px;font-weight:500;margin-bottom:3px;}
-.person-bal{font-family:var(--mono);font-size:17px;font-weight:700;}
-.person-bal.pos{color:var(--green);}
-.person-bal.neg{color:var(--red);}
-
-/* ADVANCE PAGE */
-.adv-item{background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);
-  padding:11px 14px;display:grid;
-  grid-template-columns:100px 1fr auto auto auto auto;
-  gap:8px;align-items:center;margin-bottom:6px;}
-.adv-item.settled{opacity:.45;}
-.status-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;}
-.status-badge.pending{background:rgba(247,200,106,.2);color:var(--yellow);}
-.status-badge.done{background:rgba(78,203,141,.15);color:var(--green);}
-
-/* FILTERS */
-.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
-.filters select,.filters input{width:auto;}
-
-/* PETTY REPORT AREA */
-.petty-report-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
-.petty-report-bar input{width:140px;}
+.sh { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.sh-title { font-size: 14px; font-weight: 600; }
 
 /* TABLE */
-.tbl{width:100%;border-collapse:collapse;}
-.tbl th{font-size:10px;color:var(--t3);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);letter-spacing:.05em;text-transform:uppercase;}
-.tbl td{font-size:12px;padding:8px 8px;border-bottom:1px solid var(--border);}
-.tbl tr:last-child td{border-bottom:none;}
-.tbl td.mono{font-family:var(--mono);}
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { font-size: 10px; color: var(--t3); text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.tbl td { font-size: 13px; padding: 10px; border-bottom: 1px solid var(--border); }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: rgba(255,255,255,.02); }
 
-/* DIVIDER */
-.div{height:1px;background:var(--border);margin:16px 0;}
-.empty{text-align:center;padding:40px;color:var(--t3);font-size:13px;}
-.chip{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;
-  background:rgba(124,110,247,.15);color:var(--accent);margin-left:4px;}
-.mt8{margin-top:8px;} .mt12{margin-top:12px;} .mt16{margin-top:16px;}
-.mb8{margin-bottom:8px;} .mb12{margin-bottom:12px;}
-.text-muted{color:var(--t3);font-size:11px;}
-.row{display:flex;align-items:center;gap:8px;}
-.flex-wrap{flex-wrap:wrap;}
-
-@media(max-width:700px){
-  /* NAV */
-  .nav-brand{display:none;}
-  .nav-tabs{gap:1px;}
-  .nav-tab{padding:5px 7px;font-size:10px;}
-
-  /* MAIN */
-  main{padding:12px 10px;}
-
-  /* 總覽 - 信用卡/帳戶改單欄 */
-  #page-overview > div[style]{display:flex!important;flex-direction:column!important;gap:12px!important;}
-
-  /* STAT GRID - 手機兩欄 */
-  .stat-grid{grid-template-columns:1fr 1fr;}
-  .stat-val{font-size:15px;}
-
-  /* TX ROW - 主帳明細 */
-  .tx-row.main-row{
-    grid-template-columns:1fr auto auto!important;
-    padding:10px 12px;
-  }
-  .tx-row.main-row .tx-date{display:none;}
-  .tx-row.main-row .tx-pay{display:none;}
-
-  /* 餐費明細列 */
-  #meal-list .tx-row{
-    grid-template-columns:1fr auto auto!important;
-    padding:8px 10px;
-    gap:6px;
-  }
-  #meal-list .tx-row span:nth-child(1){
-    font-size:9px;
-    grid-column:1/-1;
-    margin-bottom:2px;
-  }
-
-  /* 零用金明細列 */
-  #petty-list .tx-row{
-    grid-template-columns:1fr auto auto!important;
-    padding:8px 10px;
-  }
-  #petty-list .tx-row span:nth-child(1){
-    font-size:9px;
-    grid-column:1/-1;
-  }
-
-  /* 代墊追蹤 */
-  .adv-item{
-    grid-template-columns:1fr auto!important;
-    padding:10px 12px;
-    gap:6px;
-  }
-  .adv-item .tx-date{grid-column:1/-1;margin-bottom:2px;}
-  .adv-item .status-badge{display:none;}
-
-  /* PERSON CARDS */
-  .person-grid{grid-template-columns:1fr 1fr;}
-
-  /* FORM */
-  .form-grid,.form-grid3{grid-template-columns:1fr;}
-  .fg.full{grid-column:1;}
-
-  /* MODAL */
-  .modal{padding:16px;max-height:95vh;}
-
-  /* 餐費報表表格 - 只顯示重要欄位 */
-  #meal-report-content table{font-size:11px;width:100%;}
-  #meal-report-content div[style*="min-width:460px"]{min-width:unset!important;overflow-x:auto;}
-  #meal-report-content td,#meal-report-content th{padding:4px 5px;}
-  #meal-report-content th:first-child,
-  #meal-report-content td:first-child{display:none;}
-
-  /* 零用金匯出區 */
-  .petty-report-bar{flex-wrap:wrap;}
-  .petty-report-bar input{width:calc(50% - 20px);}
-
-  /* section header */
-  .sh{gap:6px;}
-  .sh-title{font-size:15px;}
-  .btn{padding:7px 12px;font-size:12px;}
-
-  /* 設定頁初始餘額 */
-  .settings-bal-row{flex-direction:column;align-items:flex-start!important;}
+/* TX LIST */
+.tx-row {
+  display: grid;
+  grid-template-columns: 70px auto 1fr auto auto auto;
+  gap: 8px; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
 }
+.tx-row:last-child { border-bottom: none; }
+.tx-date { font-size: 11px; color: var(--t3); font-family: var(--mono); }
+.tx-badge {
+  font-size: 10px; padding: 2px 7px; border-radius: 20px;
+  font-weight: 600; white-space: nowrap;
+}
+.b-飲食,.b-食物 { background: rgba(76,203,141,.15); color: var(--green); }
+.b-交通 { background: rgba(90,180,247,.15); color: var(--blue); }
+.b-購物,.b-服飾 { background: rgba(124,106,247,.15); color: var(--accent); }
+.b-娛樂 { background: rgba(247,160,90,.15); color: var(--orange); }
+.b-醫療 { background: rgba(232,90,122,.15); color: var(--red); }
+.b-居住,.b-房租 { background: rgba(247,200,106,.15); color: var(--yellow); }
+.b-雜支,.b-其他 { background: rgba(96,96,128,.15); color: var(--t2); }
+.b-收入 { background: rgba(76,203,141,.2); color: var(--green); }
+.b-代墊款 { background: rgba(247,200,106,.15); color: var(--yellow); }
+.b-代墊回款 { background: rgba(76,203,141,.15); color: var(--green); }
+.b-內部轉帳 { background: rgba(124,106,247,.1); color: var(--accent); }
+.b-信用卡費 { background: rgba(232,90,122,.15); color: var(--red); }
+.b-不計統計 { background: rgba(96,96,128,.1); color: var(--t3); }
+.b-押金 { background: rgba(247,160,90,.15); color: var(--orange); }
+.tx-desc { min-width: 0; }
+.tx-desc-main { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-desc-sub { font-size: 11px; color: var(--t3); margin-top: 2px; }
+.tx-amt { font-size: 14px; font-weight: 600; font-family: var(--mono); white-space: nowrap; text-align: right; }
+.tx-amt.out { color: var(--red); }
+.tx-amt.in { color: var(--green); }
+.tx-amt.neutral { color: var(--t2); }
+.tx-curr { font-size: 10px; color: var(--t3); text-align: right; }
+.tx-del { background: none; border: none; color: var(--t3); cursor: pointer; font-size: 18px; padding: 0 4px; line-height: 1; }
+.tx-del:hover { color: var(--red); }
+
+/* FORMS */
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fl { font-size: 11px; color: var(--t3); }
+input, select, textarea {
+  background: var(--s2); border: 1px solid var(--border); color: var(--text);
+  padding: 9px 11px; border-radius: var(--r-xs); font-family: var(--font); font-size: 13px;
+  width: 100%; outline: none; transition: border-color .15s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+input[type=number]::-webkit-inner-spin-button { opacity: .5; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-grid .full { grid-column: 1 / -1; }
+.text-muted { font-size: 11px; color: var(--t3); margin-top: 4px; }
+
+/* BUTTONS */
+.btn { padding: 9px 16px; border-radius: var(--r-xs); border: none; cursor: pointer; font-family: var(--font); font-size: 13px; font-weight: 600; transition: opacity .15s; }
+.btn:hover { opacity: .85; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-ghost { background: var(--s2); color: var(--t2); border: 1px solid var(--border); }
+.btn-danger { background: rgba(232,90,122,.15); color: var(--red); border: 1px solid rgba(232,90,122,.3); }
+
+/* FAB */
+.fab {
+  position: fixed; bottom: 24px; right: 20px; z-index: 90;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--accent); border: none; color: #fff;
+  font-size: 24px; cursor: pointer; box-shadow: 0 4px 20px rgba(124,106,247,.4);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s, box-shadow .15s;
+}
+.fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(124,106,247,.5); }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+  align-items: flex-end; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r) var(--r) 0 0;
+  width: 100%; max-width: 560px; max-height: 92vh;
+  overflow-y: auto; padding: 20px 18px 32px;
+}
+@media(min-width:600px){
+  .modal-overlay { align-items: center; }
+  .modal { border-radius: var(--r); max-height: 88vh; }
+}
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* CURRENCY TAB */
+.curr-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.curr-tab { flex: 1; padding: 7px; border-radius: var(--r-xs); border: 1px solid var(--border); background: var(--s2); color: var(--t2); cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; }
+.curr-tab.active-tw { background: rgba(124,106,247,.2); border-color: var(--accent); color: var(--accent); }
+.curr-tab.active-au { background: rgba(90,180,247,.2); border-color: var(--blue); color: var(--blue); }
+
+/* FILTER BAR */
+.filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.filter-bar select, .filter-bar input { width: auto; flex: 1; min-width: 100px; font-size: 12px; padding: 7px 9px; }
+
+/* ADVANCE CARD */
+.adv-card { background: var(--s2); border-radius: var(--r-sm); padding: 12px; margin-bottom: 8px; }
+.adv-meta { font-size: 11px; color: var(--t3); margin-top: 4px; }
+.badge-settled { background: rgba(76,203,141,.15); color: var(--green); font-size: 10px; padding: 2px 7px; border-radius: 20px; }
+.badge-pending { background: rgba(247,200,106,.15); color: var(--yellow); font-size: 10px; padding: 2px 7px; border-radius: 20px; }
+.badge-deposit { background: rgba(247,160,90,.15); color: var(--orange); font-size: 10px; padding: 2px 7px; border-radius: 20px; }
+
+/* SETTINGS */
+.setting-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.setting-tag { background: var(--s2); border: 1px solid var(--border); border-radius: var(--r-xs); padding: 6px 10px; font-size: 12px; flex: 1; }
+.setting-del { background: none; border: none; color: var(--t3); cursor: pointer; font-size: 16px; }
+.setting-del:hover { color: var(--red); }
+
+/* MOBILE */
+@media(max-width:600px){
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid .full { grid-column: 1; }
+  .tx-row { grid-template-columns: 60px auto 1fr auto auto; }
+  .tx-curr { display: none; }
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+  nav { padding: 0 10px; }
+  .nav-tab { padding: 5px 7px; font-size: 11px; }
+}
+
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.section-hdr { font-size: 13px; font-weight: 700; color: var(--t2); margin: 14px 0 8px; display: flex; align-items: center; gap: 6px; }
+.empty { text-align: center; color: var(--t3); font-size: 13px; padding: 32px 0; }
 </style>
 </head>
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ 記帳 v051428</div>
+  <div class="nav-brand">⬡ v.Pro1</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
     <button class="nav-tab" onclick="showPage('charts')">圖表</button>
-    <button class="nav-tab" onclick="showPage('meal')">餐費</button>
-    <button class="nav-tab" onclick="showPage('petty')">零用金</button>
-    <button class="nav-tab" onclick="showPage('advance')">代墊追蹤</button>
+    <button class="nav-tab" onclick="showPage('advance')">代墊/押金</button>
     <button class="nav-tab" onclick="showPage('settings')">設定</button>
   </div>
-  <div class="nav-right">
-    <span id="sync-status" style="font-size:11px;color:var(--t2);margin-right:4px;"></span>
-    <div style="position:relative;">
-      <button class="btn-xs" onclick="toggleNavMenu()" id="nav-menu-btn">⋯</button>
-      <div id="nav-menu" style="display:none;position:absolute;right:0;top:36px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px;z-index:999;min-width:130px;box-shadow:0 8px 24px rgba(0,0,0,.4);">
-        <button onclick="openBackupModal();toggleNavMenu()" style="display:block;width:100%;text-align:left;padding:7px 12px;border:none;background:none;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">🗂 備份/還原</button>
-        <button onclick="archiveYear();toggleNavMenu()" style="display:block;width:100%;text-align:left;padding:7px 12px;border:none;background:none;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">📦 年度封存</button>
-        <button onclick="exportData();toggleNavMenu()" style="display:block;width:100%;text-align:left;padding:7px 12px;border:none;background:none;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">📤 匯出</button>
-        <button onclick="document.getElementById('imp').click();toggleNavMenu()" style="display:block;width:100%;text-align:left;padding:7px 12px;border:none;background:none;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">📥 匯入</button>
-      </div>
-    </div>
-    <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(event)">
-  </div>
+  <span id="sync-status" class="sync-status">載入中...</span>
 </nav>
 
-<main>
-
-<!-- ══ OVERVIEW ══ -->
-<div class="page active" id="page-overview">
-  <div class="sh">
-    <div class="sh-title">財務總覽</div>
-    <button class="btn btn-primary" onclick="openTxModal()">＋ 新增記帳</button>
-  </div>
-  <div class="stat-grid" id="ov-stats"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-    <div class="card">
-      <div class="card-title">💳 信用卡</div>
-      <table class="tbl" id="ov-cc"></table>
-    </div>
-    <div class="card">
-      <div class="card-title">🏦 帳戶餘額</div>
-      <table class="tbl" id="ov-banks"></table>
-    </div>
-  </div>
+<!-- ══ 總覽 ══ -->
+<div id="page-overview" class="page active">
+  <div id="ov-content"></div>
 </div>
 
-<!-- ══ LEDGER ══ -->
-<div class="page" id="page-ledger">
-  <div class="sh">
-    <div class="sh-title">交易明細</div>
-  </div>
-  <div class="filters">
-    <select id="f-month" onchange="renderLedger()"><option value="">全部月份</option></select>
-    <select id="f-cat" onchange="renderLedger()">
-      <option value="">全部類別</option>
-      <option value="__expense__">💰 我的支出</option>
+<!-- ══ 明細 ══ -->
+<div id="page-ledger" class="page">
+  <div class="filter-bar">
+    <select id="lf-month" onchange="renderLedger()"><option value="">全部月份</option></select>
+    <select id="lf-cat" onchange="renderLedger()"><option value="">全部類別</option></select>
+    <select id="lf-acct" onchange="renderLedger()"><option value="">全部帳戶</option></select>
+    <select id="lf-curr" onchange="renderLedger()">
+      <option value="">全部幣別</option>
+      <option value="TWD">台幣</option>
+      <option value="AUD">澳幣</option>
     </select>
-    <select id="f-pay" onchange="renderLedger()"><option value="">全部帳戶/信用卡</option></select>
-    <input type="text" id="f-search" placeholder="搜尋…" oninput="renderLedger()" style="width:100px;">
   </div>
-  <!-- 信用卡對帳區 -->
-  <div id="cc-statement-bar" style="display:none;background:var(--s2);border:1px solid var(--accent);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-    <span style="font-size:12px;color:var(--t2);">選取區間：</span>
-    <input type="date" id="f-cc-start" onchange="renderLedger()" style="width:130px;">
-    <span class="text-muted">～</span>
-    <input type="date" id="f-cc-end" onchange="renderLedger()" style="width:130px;">
-    <span style="font-size:13px;color:var(--t2);">刷卡總計：</span>
-    <span id="cc-total" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--red);">$0</span>
-  </div>
-  <div class="tx-list" id="tx-list"></div>
-  <div id="ledger-load-more" style="display:none;text-align:center;margin-top:12px;">
-    <button class="btn btn-ghost" onclick="loadMoreLedger()">載入更多</button>
+  <div class="card" style="padding:0;">
+    <div id="tx-list"></div>
   </div>
 </div>
 
-<!-- ══ CHARTS ══ -->
-<div class="page" id="page-charts">
-  <div class="sh"><div class="sh-title">圖表分析</div></div>
-  <div class="filters">
-    <select id="c-year" onchange="renderCharts()"><option value="2026">2026</option><option value="2025">2025</option></select>
-    <select id="c-month" onchange="renderCharts()"><option value="">全年</option></select>
-  </div>
-  <div style="display:flex;flex-direction:column;gap:12px;">
-    <div class="card"><div class="card-title">月收支</div><div style="position:relative;height:220px;"><canvas id="ch-monthly"></canvas></div></div>
-    <div class="card"><div class="card-title">支出類別佔比</div><div style="position:relative;height:220px;"><canvas id="ch-pie"></canvas></div></div>
-    <div class="card"><div class="card-title">各類別趨勢</div><div style="position:relative;height:180px;"><canvas id="ch-trend"></canvas></div></div>
-  </div>
-</div>
-
-<!-- ══ MEAL ══ -->
-<div class="page" id="page-meal">
-  <div class="sh">
-    <div class="sh-title">餐費</div>
-    <div class="row">
-      <button class="btn btn-ghost" onclick="showMealReport()">📊 餐費報表</button>
-      <button class="btn btn-primary" onclick="openMealModal()">＋ 新增餐費記錄</button>
-    </div>
-  </div>
-  <div class="person-grid" id="meal-persons"></div>
-
-  <!-- 餐費報表區塊（預設隱藏） -->
-  <div id="meal-report-area" style="display:none;" class="card mb12">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-      <div class="card-title" style="margin-bottom:0;">📊 餐費報表</div>
-      <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input type="date" id="rpt-start" onchange="renderMealReport()" style="flex:1;min-width:130px;">
-          <span class="text-muted">～</span>
-          <input type="date" id="rpt-end" onchange="renderMealReport()" style="flex:1;min-width:130px;">
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer;">
-            <input type="checkbox" id="rpt-petty-only" onchange="renderMealReport()" style="accent-color:var(--orange);">
-            🔶 只看零用金支出
-          </label>
-          <button class="btn btn-ghost" onclick="document.getElementById('meal-report-area').style.display='none'" style="font-size:12px;padding:5px 10px;">收起</button>
-        </div>
-      </div>
-    </div>
-    <div id="meal-report-content"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📋 餐費明細</div>
-    <div class="tx-list" id="meal-list"></div>
-    <div id="meal-load-more" style="display:none;text-align:center;margin-top:12px;">
-      <button class="btn btn-ghost" onclick="loadMoreMeal()">載入更多</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ PETTY ══ -->
-<div class="page" id="page-petty">
-  <div class="sh">
-    <div class="sh-title">零用金</div>
-    <button class="btn btn-primary" onclick="openPettyModal()">＋ 新增</button>
-  </div>
-  <div class="stat-grid" id="petty-stats"></div>
-  <div class="petty-report-bar">
-    <span class="text-muted">匯出區間：</span>
-    <input type="date" id="pr-start">
-    <span class="text-muted">～</span>
-    <input type="date" id="pr-end">
-    <button class="btn btn-ghost" onclick="exportPettyReport()">📄 匯出</button>
+<!-- ══ 圖表 ══ -->
+<div id="page-charts" class="page">
+  <div class="filter-bar">
+    <select id="cf-year" onchange="renderCharts()"></select>
+    <select id="cf-curr" onchange="renderCharts()">
+      <option value="TWD">台幣 TWD</option>
+      <option value="AUD">澳幣 AUD</option>
+    </select>
   </div>
   <div class="card">
-    <div class="card-title">📋 零用金明細</div>
-    <div class="tx-list" id="petty-list"></div>
-  </div>
-</div>
-
-<!-- ══ ADVANCE ══ -->
-<div class="page" id="page-advance">
-  <div class="sh">
-    <div class="sh-title">代墊追蹤</div>
-  </div>
-  <div class="stat-grid" id="adv-stats"></div>
-  <div class="card">
-    <div class="card-title">⏳ 待回款</div>
-    <div id="adv-pending"></div>
+    <div class="card-title">月收支</div>
+    <canvas id="chart-monthly" height="220"></canvas>
   </div>
   <div class="card mt12">
-    <div class="card-title">✅ 已回款</div>
-    <div id="adv-settled"></div>
+    <div class="card-title">支出分類</div>
+    <canvas id="chart-cat" height="220"></canvas>
   </div>
 </div>
 
-<!-- ══ SETTINGS ══ -->
-<div class="page" id="page-settings">
-  <div class="sh"><div class="sh-title">設定</div></div>
+<!-- ══ 代墊/押金 ══ -->
+<div id="page-advance" class="page">
+  <div class="sh"><div class="sh-title">待回款</div><div id="adv-pending-total" style="font-family:var(--mono);color:var(--yellow);font-size:13px;"></div></div>
+  <div id="adv-pending"></div>
+  <div class="section-hdr" style="margin-top:20px;">押金追蹤</div>
+  <div id="deposit-list"></div>
+  <div class="section-hdr" style="margin-top:20px;color:var(--t3);">已結清</div>
+  <div id="adv-settled"></div>
+</div>
+
+<!-- ══ 設定 ══ -->
+<div id="page-settings" class="page">
   <div class="card">
-    <div id="settings-content"></div>
+    <div class="card-title">台幣銀行帳戶</div>
+    <div id="set-tw-banks"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input id="new-tw-bank" placeholder="新增帳戶名稱" style="flex:1;">
+      <button class="btn btn-ghost" onclick="addTWBank()">新增</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">信用卡</div>
+    <div id="set-ccs"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input id="new-cc" placeholder="新增信用卡名稱" style="flex:1;">
+      <button class="btn btn-ghost" onclick="addCC()">新增</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">澳幣銀行帳戶</div>
+    <div id="set-au-banks"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input id="new-au-bank" placeholder="新增帳戶名稱" style="flex:1;">
+      <button class="btn btn-ghost" onclick="addAUBank()">新增</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">支出類別</div>
+    <div id="set-cats"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input id="new-cat" placeholder="新增類別" style="flex:1;">
+      <button class="btn btn-ghost" onclick="addCat()">新增</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">期初餘額（台幣）</div>
+    <div id="set-tw-init"></div>
+    <div class="card-title mt12">期初餘額（澳幣）</div>
+    <div id="set-au-init"></div>
+    <div class="card-title mt12">信用卡期初未繳</div>
+    <div id="set-cc-init"></div>
+    <button class="btn btn-primary mt12" onclick="saveInitBalances()" style="width:100%;">確認更新期初餘額</button>
+  </div>
+  <div class="card">
+    <div class="card-title" style="color:var(--red);">⚠️ 危險操作</div>
+    <button class="btn btn-danger" style="width:100%;" onclick="clearAllData()">清除所有資料重新開始</button>
   </div>
 </div>
 
-</main>
-
-<!-- ══════════════════════════════════════════
-     TX MODAL — 新增記帳
-══════════════════════════════════════════ -->
+<!-- ══ 新增記帳 Modal ══ -->
 <div class="modal-overlay" id="modal-tx">
 <div class="modal">
   <div class="modal-title">新增記帳</div>
-
-  <!-- 基本資訊 -->
   <div class="form-grid">
     <div class="fg">
       <label class="fl">日期</label>
       <input type="date" id="tx-date">
     </div>
     <div class="fg">
+      <label class="fl">幣別</label>
+      <select id="tx-curr" onchange="onTxCurrChange()">
+        <option value="TWD">台幣 TWD</option>
+        <option value="AUD">澳幣 AUD</option>
+      </select>
+    </div>
+    <div class="fg full">
       <label class="fl">支付方式</label>
-      <select id="tx-pay-method" onchange="onTxPayChange()"></select>
+      <select id="tx-pay" onchange="onTxPayChange()"></select>
     </div>
-    <div class="fg" id="tx-amt-group">
-      <label class="fl">總金額</label>
-      <input type="number" id="tx-total" placeholder="0" min="0" oninput="onTxTotalChange()">
+    <div class="fg" id="tx-amt-grp">
+      <label class="fl">金額</label>
+      <input type="number" id="tx-amt" placeholder="0" min="0" oninput="onTxAmtChange()">
     </div>
-    <div class="fg" id="tx-mine-group">
+    <div class="fg" id="tx-mine-grp">
       <label class="fl">我的實際支出</label>
-      <input type="number" id="tx-mine" placeholder="0" min="0" oninput="onTxMineChange()">
+      <input type="number" id="tx-mine" placeholder="預設=總金額" min="0">
     </div>
-    <div class="fg full" id="tx-stat-group">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--t2);white-space:nowrap;">
-        <input type="checkbox" id="tx-count-stat" checked onchange="onTxStatChange()" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;">
-        <span>計入個人支出統計</span>
+    <div class="fg full" id="tx-stat-grp">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--t2);">
+        <input type="checkbox" id="tx-stat" checked onchange="onTxStatChange()" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;">
+        <span>計入支出統計</span>
       </label>
     </div>
-    <div class="fg" id="tx-cat-group">
+    <div class="fg" id="tx-cat-grp">
       <label class="fl">類別</label>
       <select id="tx-cat"></select>
     </div>
-    <div class="fg full" id="tx-item-group">
+    <div class="fg full" id="tx-item-grp">
       <label class="fl">說明</label>
-      <input type="text" id="tx-item" placeholder="例：便當、油費">
+      <input type="text" id="tx-item" placeholder="例：便當、Uber">
     </div>
     <div class="fg full">
       <label class="fl">備註</label>
@@ -501,76 +383,52 @@ textarea{resize:vertical;min-height:56px;}
     </div>
   </div>
 
-  <!-- 金額分配提示 -->
-  <div id="tx-alloc-bar" style="display:none;margin-top:8px;padding:8px 12px;background:var(--s2);border-radius:var(--r-xs);font-size:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <span style="color:var(--t3);">已分配</span>
-      <span id="tx-alloc-total" style="font-family:var(--mono);font-weight:600;color:var(--yellow);">$0 / $0</span>
-    </div>
+  <!-- 分配提示 -->
+  <div id="tx-alloc-bar" style="display:none;background:var(--s2);border-radius:var(--r-xs);padding:8px 12px;margin-top:10px;display:none;justify-content:space-between;align-items:center;">
+    <span style="font-size:12px;color:var(--t3);">已分配</span>
+    <span id="tx-alloc-val" style="font-family:var(--mono);font-size:13px;color:var(--yellow);">$0 / $0</span>
   </div>
 
   <!-- 內部轉帳 -->
-  <div id="tx-internal-area" style="display:none;">
-    <div class="div"></div>
+  <div id="tx-int-area" style="display:none;">
+    <div class="divider"></div>
     <div class="form-grid">
       <div class="fg"><label class="fl">從</label><select id="tx-int-from"></select></div>
       <div class="fg"><label class="fl">轉入</label><select id="tx-int-to"></select></div>
-      <div class="fg"><label class="fl">金額</label><input type="number" id="tx-int-amt" placeholder="0" min="0"></div>
+      <div class="fg full"><label class="fl">金額</label><input type="number" id="tx-int-amt" placeholder="0"></div>
     </div>
-    <div class="text-muted mt8">不計入收支統計</div>
+    <div class="text-muted">不計入收支統計</div>
   </div>
 
-  <!-- 信用卡費 -->
-  <div id="tx-ccfee-area" style="display:none;">
-    <div class="div"></div>
+  <!-- 繳信用卡費 -->
+  <div id="tx-cc-area" style="display:none;">
+    <div class="divider"></div>
     <div class="form-grid">
-      <div class="fg"><label class="fl">繳費信用卡</label><select id="tx-cc-card"></select></div>
-      <div class="fg"><label class="fl">繳費金額</label><input type="number" id="tx-cc-amt" placeholder="0" min="0"></div>
+      <div class="fg"><label class="fl">信用卡</label><select id="tx-cc-card"></select></div>
+      <div class="fg"><label class="fl">金額</label><input type="number" id="tx-cc-amt" placeholder="0"></div>
       <div class="fg full"><label class="fl">從哪個帳戶扣</label><select id="tx-cc-from"></select></div>
     </div>
-    <div class="text-muted mt8">不計入收支統計</div>
+    <div class="text-muted">不計入支出統計，信用卡未繳減少</div>
   </div>
 
   <!-- 收入 -->
   <div id="tx-income-area" style="display:none;">
-    <div class="div"></div>
+    <div class="divider"></div>
     <div class="form-grid">
-      <div class="fg"><label class="fl">收入金額</label><input type="number" id="tx-income-amt" placeholder="0" min="0"></div>
+      <div class="fg"><label class="fl">金額</label><input type="number" id="tx-income-amt" placeholder="0"></div>
       <div class="fg"><label class="fl">存入帳戶</label><select id="tx-income-acc"></select></div>
     </div>
   </div>
 
-  <!-- 同事餐費（附加選項） -->
-  <div id="tx-meal-addon" style="display:none;">
-    <div class="div"></div>
-    <!-- 扣款：同事消費，餐費池- -->
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--red);margin-bottom:8px;">
-      <input type="checkbox" id="tx-meal-check" onchange="onTxMealCheck()" style="accent-color:var(--red);width:16px;height:16px;flex-shrink:0;">
-      <span>從同事餐費扣款（同事消費，餐費池-）</span>
-    </label>
-    <div id="tx-meal-rows" style="display:none;"></div>
-    <button type="button" id="tx-meal-add-btn" onclick="addTxMealRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增扣款人員</button>
-
-    <div class="div" style="margin:12px 0;"></div>
-
-    <!-- 存入：我出錢給同事，餐費池+ -->
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px;">
-      <input type="checkbox" id="tx-meal-in-check" onchange="onTxMealInCheck()" style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0;">
-      <span>存入同事餐費（我出錢，餐費池+）</span>
-    </label>
-    <div id="tx-meal-in-rows" style="display:none;"></div>
-    <button type="button" id="tx-meal-in-add-btn" onclick="addTxMealInRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增存入人員</button>
-  </div>
-
-  <!-- 代墊（附加選項） -->
+  <!-- 代墊附加 -->
   <div id="tx-adv-addon" style="display:none;">
-    <div class="div"></div>
+    <div class="divider"></div>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--yellow);">
       <input type="checkbox" id="tx-adv-check" onchange="onTxAdvCheck()" style="accent-color:var(--yellow);width:16px;height:16px;flex-shrink:0;">
       <span>部分金額為代墊（等對方還款）</span>
     </label>
-    <div id="tx-adv-rows" style="display:none;margin-top:8px;"></div>
-    <button type="button" id="tx-adv-add-btn" onclick="addTxAdvRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增代墊對象</button>
+    <div id="tx-adv-rows" style="display:none;margin-top:10px;"></div>
+    <button type="button" id="tx-adv-add-btn" onclick="addAdvRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增代墊對象</button>
   </div>
 
   <div class="modal-footer">
@@ -580,1958 +438,903 @@ textarea{resize:vertical;min-height:56px;}
 </div>
 </div>
 
-<!-- ══ MEAL MODAL ══ -->
-<div class="modal-overlay" id="modal-meal">
+<!-- ══ 代墊回款 Modal ══ -->
+<div class="modal-overlay" id="modal-repay">
 <div class="modal">
-  <div class="modal-title">新增餐費記錄</div>
+  <div class="modal-title" id="repay-title">登記回款</div>
   <div class="form-grid">
-    <div class="fg">
-      <label class="fl">日期</label>
-      <input type="date" id="m-date">
-    </div>
-    <div class="fg">
-      <label class="fl">類型</label>
-      <select id="m-type" onchange="onMealTypeChange()">
-        <option value="charge">儲值（同事把錢交給我）</option>
-        <option value="split">墊款（誰幫誰買東西）</option>
-        <option value="repay">提領/還款（從餐費池出去）</option>
-      </select>
-    </div>
-    <div class="fg full">
-      <label class="fl">說明</label>
-      <input type="text" id="m-desc" placeholder="例：孟儲值、呂幫孟買便當">
-    </div>
-  </div>
-
-  <!-- 儲值 -->
-  <div id="m-charge-area" class="mt12">
-    <div class="form-grid">
-      <div class="fg">
-        <label class="fl">儲值人員</label>
-        <select id="m-charge-who"></select>
-      </div>
-      <div class="fg">
-        <label class="fl">儲值金額</label>
-        <input type="number" id="m-charge-amt" placeholder="0" min="0">
-      </div>
-      <div class="fg full">
-        <label class="fl">收款方式（錢進到哪裡）</label>
-        <select id="m-charge-method" onchange="onMealChargeMethodChange()">
-          <option value="現金">現金</option>
-          <option value="轉帳">銀行轉帳</option>
-          <option value="刷卡">刷卡（信用卡未繳+）</option>
-          <option value="僅餐費">僅計入餐費池（初始設定用）</option>
-        </select>
-      </div>
-      <div class="fg full" id="m-charge-bank-group" style="display:none;">
-        <label class="fl">存入哪個帳戶</label>
-        <select id="m-charge-bank"></select>
-      </div>
-      <div class="fg full" id="m-charge-cc-group" style="display:none;">
-        <label class="fl">哪張信用卡</label>
-        <select id="m-charge-cc"></select>
-      </div>
-    </div>
-  </div>
-
-  <!-- 墊款 -->
-  <div id="m-split-area" class="mt12" style="display:none;">
-    <div class="form-grid mb8">
-      <div class="fg">
-        <label class="fl">墊款人（付錢的）</label>
-        <select id="m-payer" onchange="onMealPayerChange()"></select>
-      </div>
-      <div class="fg">
-        <label class="fl">墊款總金額（自動）</label>
-        <input type="number" id="m-payer-total" readonly placeholder="自動加總">
-      </div>
-    </div>
-    <div class="text-muted mb8">欠款人（誰欠錢，各欠多少）：</div>
-    <div id="m-debtor-rows"></div>
-    <button type="button" onclick="addDebtorRow()" class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:12px;">＋ 新增欠款人</button>
-    <!-- 申瑋欠款時：可選計入支出統計 -->
-    <div id="m-stat-group" style="display:none;margin-top:10px;">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--t2);">
-        <input type="checkbox" id="m-count-stat" onchange="document.getElementById('m-stat-cat-group').style.display=this.checked?'block':'none'" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;">
-        <span>計入個人支出統計（只有池子變動，帳戶不動）</span>
-      </label>
-      <div class="fg" id="m-stat-cat-group" style="display:none;margin-top:8px;">
-        <label class="fl">類別</label>
-        <select id="m-stat-cat"></select>
-      </div>
-    </div>
-    <div class="text-muted mt8" style="line-height:1.6;">
-      ※ 墊款人選「申瑋」→ 從我個人池扣，餐費池+欠款人金額<br>
-      ※ 墊款人選「零用金」→ 零用金池-，餐費池+欠款人金額<br>
-      ※ 欠款人選「申瑋」→ 我個人池-，餐費池不變，可選計入統計
-    </div>
-  </div>
-
-  <!-- 提領/還款 -->
-  <div id="m-repay-area" class="mt12" style="display:none;">
-    <div class="form-grid">
-      <div class="fg">
-        <label class="fl">還給誰 / 誰提領</label>
-        <select id="m-repay-who"></select>
-      </div>
-      <div class="fg">
-        <label class="fl">金額</label>
-        <input type="number" id="m-repay-amt" placeholder="0" min="0">
-      </div>
-      <div class="fg full">
-        <label class="fl">還款方式（我如何付出去）</label>
-        <select id="m-repay-method">
-          <option value="現金">現金（我現金池-）</option>
-          <option value="轉帳">轉帳（我銀行帳戶-）</option>
-        </select>
-      </div>
-      <div class="fg full" id="m-repay-bank-group" style="display:none;">
-        <label class="fl">從哪個帳戶轉</label>
-        <select id="m-repay-bank"></select>
-      </div>
-    </div>
-    <div class="text-muted mt8">提領/還款 → 餐費池-、我銀行總額-、我個人池不變</div>
-  </div>
-
-  <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('modal-meal')">取消</button>
-    <button class="btn btn-primary" onclick="saveMealTx()">儲存</button>
-  </div>
-</div>
-</div>
-
-<!-- ══ PETTY MODAL ══ -->
-<div class="modal-overlay" id="modal-petty">
-<div class="modal">
-  <div class="modal-title">新增零用金記錄</div>
-  <div class="form-grid">
-    <div class="fg">
-      <label class="fl">日期</label>
-      <input type="date" id="p-date">
-    </div>
-    <div class="fg">
-      <label class="fl">類型</label>
-      <select id="p-type" onchange="onPettyTypeChange()">
-        <option value="in">公司撥款（零用金+）</option>
-        <option value="out-person">員工請款（零用金-）</option>
-        <option value="out-self">我自行支出（零用金-）</option>
-        <option value="fine">罰款繳入（零用金+）</option>
-        <option value="pool-only">僅計入零用金池（初始設定用）</option>
-      </select>
-    </div>
-    <div class="fg">
-      <label class="fl">摘要</label>
-      <input type="text" id="p-desc" placeholder="例：公司車加油">
-    </div>
-    <div class="fg">
-      <label class="fl">金額</label>
-      <input type="number" id="p-amt" placeholder="0" min="0">
-    </div>
-    <!-- 撥款時：匯入哪個帳戶 -->
-    <div class="fg full" id="p-in-bank-group">
-      <label class="fl">匯入帳戶（錢進到哪裡）</label>
-      <select id="p-in-bank"></select>
-    </div>
-    <!-- 支出時：從哪裡付 -->
-    <div class="fg full" id="p-out-pay-group" style="display:none;">
-      <label class="fl">付款方式（錢從哪裡出）</label>
-      <select id="p-out-pay">
+    <div class="fg"><label class="fl">回款日期</label><input type="date" id="repay-date"></div>
+    <div class="fg"><label class="fl">回款方式</label>
+      <select id="repay-method" onchange="onRepayMethodChange()">
         <option value="現金">現金</option>
+        <option value="銀行轉帳">銀行轉帳</option>
       </select>
     </div>
-    <div class="fg">
-      <label class="fl">墊款人（員工請款時）</label>
-      <select id="p-payer">
-        <option value="">不適用</option>
-      </select>
-    </div>
-    <div class="fg">
-      <label class="fl">回款方式</label>
-      <select id="p-repay">
-        <option value="">不適用</option>
-        <option value="加餐費">加入餐費</option>
-        <option value="匯款">匯款</option>
-        <option value="現金">現金</option>
-      </select>
-    </div>
-    <div class="fg full">
-      <label class="fl">備註</label>
-      <input type="text" id="p-note" placeholder="選填">
+    <div class="fg full" id="repay-bank-grp" style="display:none;">
+      <label class="fl">存入帳戶</label>
+      <select id="repay-bank"></select>
     </div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('modal-petty')">取消</button>
-    <button class="btn btn-primary" onclick="savePettyTx()">儲存</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-repay')">取消</button>
+    <button class="btn btn-primary" onclick="saveRepay()">確認回款</button>
   </div>
 </div>
 </div>
 
-<!-- ══ ADVANCE REPAY MODAL ══ -->
-<div class="modal-overlay" id="modal-adv-repay">
+<!-- ══ 押金回款 Modal ══ -->
+<div class="modal-overlay" id="modal-deposit-repay">
 <div class="modal">
-  <div class="modal-title">登記回款</div>
-  <div id="adv-repay-info" class="text-muted mb12" style="padding:10px;background:var(--s2);border-radius:var(--r-xs);font-size:13px;"></div>
+  <div class="modal-title">押金退回</div>
   <div class="form-grid">
-    <div class="fg">
-      <label class="fl">回款日期</label>
-      <input type="date" id="ar-date">
-    </div>
-    <div class="fg">
-      <label class="fl">回款方式</label>
-      <select id="ar-method" onchange="onAdvMethodChange()">
-        <option value="現金">現金還我</option>
-        <option value="轉帳">銀行轉帳</option>
-        <option value="扣餐費">扣餐費（不影響銀行）</option>
+    <div class="fg"><label class="fl">退回日期</label><input type="date" id="dr-date"></div>
+    <div class="fg"><label class="fl">退回方式</label>
+      <select id="dr-method" onchange="onDRMethodChange()">
+        <option value="現金">現金</option>
+        <option value="銀行轉帳">銀行轉帳</option>
       </select>
     </div>
-    <div class="fg" id="ar-bank-group" style="display:none;">
-      <label class="fl">存入哪個帳戶</label>
-      <select id="ar-bank"></select>
+    <div class="fg full" id="dr-bank-grp" style="display:none;">
+      <label class="fl">存入帳戶</label>
+      <select id="dr-bank"></select>
     </div>
-    <div class="fg">
-      <label class="fl">回款金額</label>
-      <input type="number" id="ar-amt" placeholder="0" min="0">
-    </div>
-  </div>
-  <div class="text-muted mt8" style="line-height:1.6;font-size:12px;">
-    ※ 現金/轉帳：我的帳戶餘額+，不算收入<br>
-    ※ 扣餐費：從同事餐費池扣，我銀行不動
   </div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('modal-adv-repay')">取消</button>
-    <button class="btn btn-primary" onclick="saveAdvRepay()">確認回款</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-deposit-repay')">取消</button>
+    <button class="btn btn-primary" onclick="saveDepositRepay()">確認退回</button>
   </div>
 </div>
 </div>
 
-<!-- ══ BACKUP MODAL ══ -->
-<div class="modal-overlay" id="modal-backup">
+<!-- ══ 新增押金 Modal ══ -->
+<div class="modal-overlay" id="modal-deposit">
 <div class="modal">
-  <div class="modal-title">🗂 備份與還原</div>
-  <div class="text-muted mb12" style="line-height:1.6;font-size:12px;">
-    滾動備份：自動保留最近10筆，存新刪舊<br>
-    年度封存：永久保留，不會被自動刪除
+  <div class="modal-title">新增押金</div>
+  <div class="form-grid">
+    <div class="fg"><label class="fl">日期</label><input type="date" id="dep-date"></div>
+    <div class="fg"><label class="fl">幣別</label>
+      <select id="dep-curr">
+        <option value="TWD">台幣 TWD</option>
+        <option value="AUD">澳幣 AUD</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">金額</label><input type="number" id="dep-amt" placeholder="0"></div>
+    <div class="fg"><label class="fl">支付帳戶</label><select id="dep-pay"></select></div>
+    <div class="fg full"><label class="fl">說明</label><input type="text" id="dep-desc" placeholder="例：租屋押金、電費押金"></div>
+    <div class="fg full"><label class="fl">備註</label><input type="text" id="dep-note" placeholder="選填"></div>
   </div>
-  <div id="backup-list"></div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('modal-backup')">關閉</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-deposit')">取消</button>
+    <button class="btn btn-primary" onclick="saveDeposit()">儲存</button>
   </div>
 </div>
 </div>
 
+<button class="fab" onclick="openTxModal()">＋</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-window.onerror=function(msg,src,line,col,err){
-  document.body.innerHTML='<div style="padding:20px;color:red;font-family:monospace;background:#1a1a1a;min-height:100vh;">'+
-    '<h2>JS錯誤</h2><p>訊息: '+msg+'</p><p>行號: '+line+'</p><p>詳細: '+(err?err.stack:'')+'</p></div>';
-  return true;
-};
-</script>
-<script>
-// ════════════════════════════════════════════════════
-//  DEFAULT DATA
-// ════════════════════════════════════════════════════
+// ════════════════════════════════════════
+// CLOUD CONFIG
+// ════════════════════════════════════════
+const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbzGOqXaiM44kq_ow6yFMQIs3cPbS955I0JLoZVh2ZV4rrj9n0RG0yQ_V4NCQ1Cd8_wz/exec';
+
+// ════════════════════════════════════════
+// DEFAULT DATA
+// ════════════════════════════════════════
 const DEFAULT = {
-  settings:{
-    creditCards:['華航鼎尊卡','台新Richart卡','國泰Cube卡','玉山Pi卡'],
-    banks:['玉山銀行帳戶','國泰銀行帳戶','中信銀行帳戶','台新銀行帳戶','台企銀行帳戶','土地銀行帳戶'],
-    categories:['飲食','服飾','交通','娛樂','醫療','居住','雜支','購物','收入','代墊款','代墊回款','內部轉帳','信用卡費'],
-    persons:['孟沛羽','張承智','呂芃進'], // 同事（不含申瑋）
-    initBanks:{'玉山銀行帳戶':233184,'國泰銀行帳戶':139,'中信銀行帳戶':2500,'台新銀行帳戶':25131,'台企銀行帳戶':0,'土地銀行帳戶':0},
-    initCash:15269,
-    initCC:{'華航鼎尊卡':24797,'台新Richart卡':32978,'國泰Cube卡':1043,'玉山Pi卡':0},
-    initPetty:60000,
-    extDebt:45300, // 外部借款
+  settings: {
+    twBanks: ['玉山銀行','國泰銀行','中信銀行','台新銀行','台企銀行','土地銀行'],
+    auBanks: ['ANZ帳戶','Commonwealth帳戶'],
+    creditCards: ['華航鼎尊卡','台新Richart卡','國泰Cube卡','玉山Pi卡'],
+    categories: ['飲食','交通','購物','娛樂','醫療','居住','雜支'],
+    initTWBanks: {},
+    initAUBanks: {},
+    initTWCash: 0,
+    initAUCash: 0,
+    initCC: {},
   },
-  transactions:[],    // 主帳明細
-  mealTxs:[],         // 餐費記錄
-  pettyTxs:[],        // 零用金記錄
-  advances:[],        // 代墊追蹤 {id,date,who,amount,desc,settled,settleDate,settleMethod}
+  transactions: [],
+  advances: [],
+  deposits: [],
 };
-
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1l1e88a95afRtqnAbRfVIiY2D0qtVLb0ZcwwVAu7qWL20K-rUvhTyn9FH1MsPrvjCEQ/exec';
-const MAX_ROLLING = 10; // 滾動備份最多保留幾筆
 
 let DB = JSON.parse(JSON.stringify(DEFAULT));
+let _repayId = null;
+let _depositRepayId = null;
 let _saving = false;
+let _charts = {};
 
-// ── 雲端讀取 ──
-async function loadFromCloud() {
-  showSyncStatus('載入中…', 'loading');
+// ════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════
+async function loadFromCloud(){
+  showSyncStatus('載入中...','');
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(()=>controller.abort(), 8000);
-    const res = await fetch(GAS_URL + '?method=load', {signal:controller.signal});
-    clearTimeout(timeout);
-    const text = await res.text();
+    const r = await fetch(CLOUD_URL + '?method=load', {cache:'no-store'});
+    const text = await r.text();
     const data = JSON.parse(text);
-    if (data && data.settings) {
+    if(data && data.settings){
       DB = data;
-      localStorage.setItem('acct_v3', text);
-      showSyncStatus('已同步 ✓', 'ok');
+      localStorage.setItem('acct_pro', text);
+      showSyncStatus('已同步 ✓','ok');
     } else {
-      showSyncStatus('雲端無資料', 'warn');
+      throw new Error('no data');
     }
   } catch(e) {
-    const local = localStorage.getItem('acct_v3');
-    if (local) { try { DB = JSON.parse(local); } catch(e2){} }
-    showSyncStatus('離線模式', 'warn');
+    const local = localStorage.getItem('acct_pro');
+    if(local){
+      try{ DB = JSON.parse(local); showSyncStatus('離線模式','warn'); }
+      catch{ showSyncStatus('載入失敗','err'); }
+    } else {
+      showSyncStatus('離線模式（無本地資料）','warn');
+    }
   }
-  renderOverview();
-  // 初始化 modal 點外關閉
-  document.querySelectorAll('.modal-overlay').forEach(m=>{
-    m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
-  });
+  renderAll();
 }
 
-// ── 儲存（同時做滾動備份）──
-async function save() {
+async function save(){
   const json = JSON.stringify(DB);
-  localStorage.setItem('acct_v3', json);
-
-  // 檢查資料大小，超過 500KB 提醒
-  const sizeKB = Math.round(json.length / 1024);
-  if(sizeKB > 500) {
-    showSyncStatus(`⚠️ 資料量 ${sizeKB}KB，建議年度封存`, 'warn');
-  }
-
-  if (_saving) return;
+  localStorage.setItem('acct_pro', json);
+  if(_saving) return;
   _saving = true;
-  showSyncStatus('儲存中…', 'loading');
   try {
-    await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({method:'save', data:json}),
-      headers: {'Content-Type':'text/plain'}
+    await fetch(CLOUD_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({method:'save', data: DB})
     });
-    showSyncStatus('已儲存 ✓', 'ok');
+    showSyncStatus('已同步 ✓','ok');
   } catch(e) {
-    showSyncStatus('雲端失敗，已存本地', 'warn');
+    showSyncStatus('離線模式','warn');
   }
   _saving = false;
 }
 
-// ── 取得備份列表 ──
-async function loadBackupList() {
-  try {
-    const res = await fetch(GAS_URL + '?method=listBackups');
-    const data = await res.json();
-    return data;
-  } catch(e) { return {rolling:[], yearly:[]}; }
-}
-
-// ── 從備份還原 ──
-async function restoreFromBackup(cell) {
-  showSyncStatus('還原中…', 'loading');
-  try {
-    const res = await fetch(GAS_URL + `?method=restore&cell=${cell}`);
-    const text = await res.text();
-    const data = JSON.parse(text);
-    if (data && data.settings) {
-      DB = data;
-      localStorage.setItem('acct_v3', JSON.stringify(DB));
-      renderOverview();
-      showSyncStatus('已還原 ✓', 'ok');
-      closeModal('modal-backup');
-      alert('還原成功！');
-    }
-  } catch(e) { showSyncStatus('還原失敗', 'warn'); }
-}
-
-// ── 年度封存 ──
-async function archiveYear() {
-  const year = prompt('封存哪一年度？', new Date().getFullYear());
-  if (!year) return;
-  if (!confirm(`確定要封存 ${year} 年度？這份記錄將永久保留。`)) return;
-  showSyncStatus('封存中…', 'loading');
-  try {
-    await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({method:'archive', year, data:JSON.stringify(DB)}),
-      headers: {'Content-Type':'text/plain'}
-    });
-    showSyncStatus(`${year}年度已封存 ✓`, 'ok');
-    alert(`${year} 年度封存成功！`);
-  } catch(e) { showSyncStatus('封存失敗', 'warn'); }
-}
-
-// ── 開啟備份還原視窗 ──
-async function openBackupModal() {
-  document.getElementById('modal-backup').classList.add('open');
-  document.getElementById('backup-list').innerHTML='<div class="text-muted">載入中…</div>';
-  const data = await loadBackupList();
-  const {rolling=[], yearly=[]} = data;
-
-  document.getElementById('backup-list').innerHTML=`
-    <div style="margin-bottom:16px;">
-      <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">🔄 滾動備份（最近${rolling.length}筆）</div>
-      ${rolling.length ? rolling.map(b=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--s2);border-radius:var(--r-xs);margin-bottom:4px;">
-          <span style="font-size:13px;">${b.label}</span>
-          <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px;" onclick="restoreFromBackup('${b.cell}')">還原</button>
-        </div>`).join('')
-      : '<div class="text-muted">尚無滾動備份</div>'}
-    </div>
-    <div class="div"></div>
-    <div>
-      <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">📦 年度封存</div>
-      ${yearly.length ? yearly.map(b=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--s2);border-radius:var(--r-xs);margin-bottom:4px;">
-          <span style="font-size:13px;">${b.label}</span>
-          <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px;" onclick="restoreFromBackup('${b.cell}')">還原</button>
-        </div>`).join('')
-      : '<div class="text-muted">尚無年度封存</div>'}
-    </div>`;
-}
-
-function showSyncStatus(msg, type) {
+function showSyncStatus(msg, cls){
   const el = document.getElementById('sync-status');
-  if (!el) return;
   el.textContent = msg;
-  el.style.color = type==='ok'?'var(--green)':type==='warn'?'var(--yellow)':'var(--t2)';
+  el.className = 'sync-status' + (cls ? ' ' + cls : '');
 }
 
-// ════════════════════════════════════════════════════
-//  COMPUTED STATS
-// ════════════════════════════════════════════════════
+// ════════════════════════════════════════
+// COMPUTE
+// ════════════════════════════════════════
 function computeAll(){
   const s = DB.settings;
+  // TW
+  let twCash = s.initTWCash || 0;
+  let twBanks = {};
+  s.twBanks.forEach(b => twBanks[b] = s.initTWBanks[b] || 0);
+  let cc = {};
+  s.creditCards.forEach(c => cc[c] = s.initCC[c] || 0);
 
-  // 帳戶餘額
-  let banks = {...s.initBanks};
-  let cash = s.initCash;
-  // CC 未繳
-  let cc = {...s.initCC};
-  // 零用金
-  let petty = s.initPetty;
+  // AU
+  let auCash = s.initAUCash || 0;
+  let auBanks = {};
+  s.auBanks.forEach(b => auBanks[b] = s.initAUBanks[b] || 0);
 
-  // --- 主帳交易 ---
-  DB.transactions.forEach(tx=>{
-    const amt = Number(tx.amount)||0;
-    if(tx.cat==='收入'){
-      // 真正的收入才計入
-      if(tx.payMethod==='現金') cash+=amt;
-      else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]+=amt;
-    } else if(tx.cat==='內部轉帳'){
-      const from=tx.intFrom, to=tx.intTo, a=Number(tx.intAmt)||0;
-      if(from==='__代墊回款__'){
-        // 代墊回款：銀行+，不算收入
-        if(to==='現金') cash+=a; else if(banks[to]!==undefined) banks[to]+=a;
-      } else {
-        if(from==='現金') cash-=a; else if(banks[from]!==undefined) banks[from]-=a;
-        if(to==='現金') cash+=a; else if(banks[to]!==undefined) banks[to]+=a;
-      }
-    } else if(tx.cat==='信用卡費'){
-      const from=tx.ccFrom, a=Number(tx.ccAmt)||0, card=tx.ccCard;
-      if(from==='現金') cash-=a; else if(banks[from]!==undefined) banks[from]-=a;
-      if(cc[card]!==undefined) cc[card]=Math.max(0,cc[card]-a);
-    } else if(tx.cat==='代墊款'){
-      // 代墊款：只影響信用卡未繳或銀行，不計入支出
-      if(tx.payMethod==='現金') cash-=amt;
-      else if(s.creditCards.includes(tx.payMethod)) cc[tx.payMethod]=(cc[tx.payMethod]||0)+amt;
-      else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]-=amt;
-    } else if(tx.cat==='代墊回款'){
-      // 代墊回款：銀行+，不算收入
-      if(tx.payMethod==='現金') cash+=amt;
-      else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]+=amt;
-    } else if(tx.cat==='餐費扣款'){
-      // 餐費扣款：只影響支付方式，不計入支出
-      if(tx.payMethod==='現金') cash-=amt;
-      else if(s.creditCards.includes(tx.payMethod)) cc[tx.payMethod]=(cc[tx.payMethod]||0)+amt;
-      else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]-=amt;
+  DB.transactions.forEach(tx => {
+    const a = Number(tx.amount) || 0;
+    const curr = tx.currency || 'TWD';
+    const banks = curr === 'TWD' ? twBanks : auBanks;
+    const isAU = curr === 'AUD';
+
+    if(tx.cat === '收入'){
+      if(tx.payMethod === '現金'){ if(isAU) auCash+=a; else twCash+=a; }
+      else if(banks[tx.payMethod] !== undefined) banks[tx.payMethod] += a;
+    } else if(tx.cat === '內部轉帳'){
+      const fromBanks = (tx.intFromCurr||curr) === 'AUD' ? auBanks : twBanks;
+      const toBanks = (tx.intToCurr||curr) === 'AUD' ? auBanks : twBanks;
+      const fromCash = (tx.intFromCurr||curr) === 'AUD' ? 'AUCash' : 'TWCash';
+      const toCash = (tx.intToCurr||curr) === 'AUD' ? 'AUCash' : 'TWCash';
+      const intA = Number(tx.intAmt) || 0;
+      if(tx.intFrom === '現金'){ if(fromCash==='AUCash') auCash-=intA; else twCash-=intA; }
+      else if(fromBanks[tx.intFrom] !== undefined) fromBanks[tx.intFrom] -= intA;
+      if(tx.intTo === '現金'){ if(toCash==='AUCash') auCash+=intA; else twCash+=intA; }
+      else if(toBanks[tx.intTo] !== undefined) toBanks[tx.intTo] += intA;
+    } else if(tx.cat === '信用卡費'){
+      const ccA = Number(tx.ccAmt) || 0;
+      if(twBanks[tx.ccFrom] !== undefined) twBanks[tx.ccFrom] -= ccA;
+      if(cc[tx.ccCard] !== undefined) cc[tx.ccCard] = Math.max(0, cc[tx.ccCard] - ccA);
+    } else if(tx.cat === '代墊回款'){
+      if(tx.payMethod === '現金'){ if(isAU) auCash+=a; else twCash+=a; }
+      else if(banks[tx.payMethod] !== undefined) banks[tx.payMethod] += a;
+    } else if(tx.cat === '押金退回'){
+      if(tx.payMethod === '現金'){ if(isAU) auCash+=a; else twCash+=a; }
+      else if(banks[tx.payMethod] !== undefined) banks[tx.payMethod] += a;
     } else {
-      // 一般支出（飲食/交通等）
-      if(tx.payMethod==='現金') cash-=amt;
-      else if(s.creditCards.includes(tx.payMethod)) cc[tx.payMethod]=(cc[tx.payMethod]||0)+amt;
-      else if(banks[tx.payMethod]!==undefined) banks[tx.payMethod]-=amt;
+      // 一般支出、代墊款
+      if(tx.payMethod === '現金'){ if(isAU) auCash-=a; else twCash-=a; }
+      else if(s.creditCards.includes(tx.payMethod)) cc[tx.payMethod] = (cc[tx.payMethod]||0) + a;
+      else if(banks[tx.payMethod] !== undefined) banks[tx.payMethod] -= a;
     }
-    // 零用金影響
-    if(tx.pettyEffect){
-      const pa=Number(tx.pettyEffectAmt)||0;
-      if(tx.pettyDir==='out') petty-=pa; else petty+=pa;
-    }
-    // 餐費影響（同事欠款從我銀行虛扣，但銀行帳面不動，只是池的計算）
-    // → 不影響帳戶餘額，餐費池由 mealTxs 算
   });
 
-  // --- 零用金交易 ---
-  DB.pettyTxs.forEach(tx=>{
-    const a=Number(tx.amount)||0;
-    if(tx.type==='in'||tx.type==='fine'){
-      petty+=a;
-      if(tx.inBank){
-        if(tx.inBank==='現金') cash+=a;
-        else if(banks[tx.inBank]!==undefined) banks[tx.inBank]+=a;
-      }
-    } else if(tx.type==='pool-only'){
-      petty+=a;
-    } else if(tx.type==='out-self'){
-      // 我自行支出：零用金-，我的帳戶也-
-      petty-=a;
-      if(tx.outPay){
-        if(tx.outPay==='現金') cash-=a;
-        else if(s.creditCards.includes(tx.outPay)) cc[tx.outPay]=(cc[tx.outPay]||0)+a;
-        else if(banks[tx.outPay]!==undefined) banks[tx.outPay]-=a;
-      }
-    } else if(tx.type==='out-person'){
-      // 員工請款：只有零用金-，跟我的帳戶無關
-      petty-=a;
-    }
-  });
-  // 餐費提領會從銀行實際扣
-  DB.mealTxs.forEach(tx=>{
-    if(tx.type==='repay'){
-      const a=Number(tx.amount)||0;
-      if(tx.repayMethod==='現金') cash-=a;
-      else if(tx.repayBank && banks[tx.repayBank]!==undefined) banks[tx.repayBank]-=a;
-    }
-    // 儲值：錢進我帳戶（現金、轉帳或刷卡）
-    if(tx.type==='charge'){
-      const a=Number(tx.amount)||0;
-      if(tx.chargeMethod==='現金') cash+=a;
-      else if(tx.chargeMethod==='刷卡'){
-        if(tx.chargeCC && cc[tx.chargeCC]!==undefined) cc[tx.chargeCC]+=a;
-      } else if(tx.chargeMethod==='轉帳'){
-        if(tx.chargeBank && banks[tx.chargeBank]!==undefined) banks[tx.chargeBank]+=a;
-      }
-      // 僅餐費：不影響銀行
-    }
-    // 零用金轉餐費
-    if(tx.type==='petty-in') petty-=Number(tx.amount)||0;
-  });
-  const totalCC = Object.values(cc).reduce((a,b)=>a+b,0);
-  const mealPool = computeMealPool();
-  const totalBank = Object.values(banks).reduce((a,b)=>a+b,0);
-  const totalAssets = totalBank+cash;
-  const myReal = totalAssets - totalCC - petty - mealPool;
+  // 押金不影響帳戶（押金付出已在主帳記錄）
 
-  return {banks,cash,cc,petty,mealPool,totalCC,totalBank,totalAssets,myReal};
+  const twTotal = twCash + Object.values(twBanks).reduce((a,b)=>a+b,0);
+  const auTotal = auCash + Object.values(auBanks).reduce((a,b)=>a+b,0);
+  const ccTotal = Object.values(cc).reduce((a,b)=>a+b,0);
+  const twReal = twTotal - ccTotal;
+
+  return { twCash, twBanks, auCash, auBanks, cc, ccTotal, twTotal, auTotal, twReal };
 }
 
-function computeMealPool(){
-  // 餐費池 = 各同事餘額之和（正數代表他們在我這邊有錢）
-  const bals = computePersonBals();
-  return Object.values(bals).reduce((a,b)=>a+b,0);
+// ════════════════════════════════════════
+// RENDER ALL
+// ════════════════════════════════════════
+function renderAll(){
+  renderOverview();
+  renderLedger();
+  renderAdvance();
+  renderSettings();
+  renderCharts();
+  fillLedgerFilters();
 }
 
-function computePersonBals(){
-  let bal={};
-  DB.settings.persons.forEach(p=>bal[p]=0);
-
-  DB.mealTxs.forEach(tx=>{
-    if(tx.type==='charge'){
-      // 同事儲值 → 他的餘額+
-      if(bal[tx.chargeWho]!==undefined) bal[tx.chargeWho]+=Number(tx.amount)||0;
-    } else if(tx.type==='split'){
-      // 墊款人是同事 → 他的餘額+
-      const payerAmt = Number(tx.payerTotal)||0;
-      if(tx.payer && bal[tx.payer]!==undefined) bal[tx.payer]+=payerAmt;
-      // 欠款人 → 各自餘額-（只計算同事，申瑋不進池）
-      (tx.debtors||[]).forEach(d=>{
-        if(d.who && bal[d.who]!==undefined) bal[d.who]-=Number(d.amt)||0;
-        // 如果申瑋是欠款人 → 個人池扣，但餐費池實際+（因為同事的+還在）
-        // 這裡只計算同事的餘額，申瑋的部分反映在 myReal
-      });
-    } else if(tx.type==='repay'){
-      // 提領 → 那個人的餘額-
-      if(tx.repayWho && bal[tx.repayWho]!==undefined) bal[tx.repayWho]-=Number(tx.amount)||0;
-    } else if(tx.type==='petty-in'){
-      // 零用金轉入：指定給某人 → 那人餘額+
-      if(tx.targetWho && bal[tx.targetWho]!==undefined) bal[tx.targetWho]+=Number(tx.amount)||0;
-    }
-  });
-  // 主帳交易的餐費影響
-  DB.transactions.forEach(tx=>{
-    if(!tx.mealEffect) return;
-    (tx.mealRows||[]).forEach(row=>{
-      const w=row.who, a=Number(row.amt)||0;
-      if(w && bal[w]!==undefined){
-        if(row.dir==='+') bal[w]+=a;
-        else bal[w]-=a;
-      }
-    });
-  });
-  return bal;
+function fmt(n, curr='TWD'){
+  const sym = curr==='AUD' ? 'A$' : '$';
+  return sym + Math.abs(Math.round(n)).toLocaleString();
 }
 
-// ════════════════════════════════════════════════════
-//  NAV
-// ════════════════════════════════════════════════════
-const PAGE_LABELS={overview:'總覽',ledger:'明細',charts:'圖表',meal:'餐費',petty:'零用金',advance:'代墊追蹤',settings:'設定'};
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t=>{if(t.textContent.trim()===PAGE_LABELS[id])t.classList.add('active');});
-  const renders={overview:renderOverview,ledger:renderLedger,charts:renderCharts,meal:renderMeal,petty:renderPetty,advance:renderAdvance,settings:renderSettings};
-  renders[id]?.();
-}
-
-// ════════════════════════════════════════════════════
-//  OVERVIEW
-// ════════════════════════════════════════════════════
+// ════════════════════════════════════════
+// OVERVIEW
+// ════════════════════════════════════════
 function renderOverview(){
-  const {banks,cash,cc,petty,mealPool,totalCC,totalBank,totalAssets,myReal}=computeAll();
-  const fmt=n=>(n<0?'-':'')+'$'+Math.abs(Math.round(n)).toLocaleString();
-  document.getElementById('ov-stats').innerHTML=[
-    {l:'存款總額',v:fmt(totalBank),c:'blue'},
-    {l:'現金',v:fmt(cash),c:'green'},
-    {l:'信用卡未繳',v:fmt(totalCC),c:'red'},
-    {l:'零用金餘額',v:fmt(petty),c:'orange'},
-    {l:'餐費池（同事）',v:fmt(mealPool),c:'purple'},
-    {l:'實際擁有',v:fmt(myReal),c:myReal>=0?'green':'red'},
-  ].map(s=>`<div class="stat ${s.c}"><div class="stat-label">${s.l}</div><div class="stat-val ${s.c}">${s.v}</div></div>`).join('');
+  const r = computeAll();
+  const s = DB.settings;
 
-  document.getElementById('ov-cc').innerHTML=`<thead><tr><th>信用卡</th><th>未繳</th></tr></thead><tbody>`+
-    DB.settings.creditCards.map(c=>`<tr><td>${c}</td><td class="mono" style="color:var(--red)">$${Math.round(cc[c]||0).toLocaleString()}</td></tr>`).join('')+'</tbody>';
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <h2 style="font-size:18px;font-weight:700;">財務總覽</h2>
+  </div>`;
 
-  const allBanks=[['現金',cash],...Object.entries(banks)];
-  const totalDeposit=Object.values(banks).reduce((a,b)=>a+b,0);
-  document.getElementById('ov-banks').innerHTML=`<thead><tr><th>帳戶</th><th>餘額</th></tr></thead><tbody>`+
-    allBanks.map(([n,v])=>`<tr><td>${n}</td><td class="mono" style="color:${v>=0?'var(--green)':'var(--red)'}">$${Math.round(v).toLocaleString()}</td></tr>`).join('')+
-    `<tr style="border-top:2px solid var(--border2);"><td style="font-weight:600;color:var(--blue);">存款總額（不含現金）</td><td class="mono" style="color:var(--blue);font-weight:600;">$${Math.round(totalDeposit).toLocaleString()}</td></tr>`+
-    '</tbody>';
+  // TW Summary
+  html += `<div class="section-hdr" style="color:var(--accent);">🇹🇼 台幣 TWD</div>`;
+  html += `<div class="summary-grid">
+    <div class="sum-card tw"><div class="sum-label">存款總額</div><div class="sum-val tw">${fmt(r.twTotal)}</div><div class="sum-currency">含現金</div></div>
+    <div class="sum-card tw"><div class="sum-label">現金</div><div class="sum-val tw">${fmt(r.twCash)}</div><div class="sum-currency">TWD</div></div>
+    <div class="sum-card red"><div class="sum-label">信用卡未繳</div><div class="sum-val neg">${fmt(r.ccTotal)}</div><div class="sum-currency">待繳</div></div>
+    <div class="sum-card green"><div class="sum-label">實際擁有</div><div class="sum-val ${r.twReal>=0?'pos':'neg'}">${fmt(r.twReal)}</div><div class="sum-currency">扣除未繳</div></div>
+  </div>`;
+
+  // TW Banks
+  html += `<div class="card" style="margin-bottom:12px;">
+    <div class="card-title">台幣帳戶餘額</div>
+    <table class="tbl"><thead><tr><th>帳戶</th><th style="text-align:right;">餘額</th></tr></thead><tbody>
+    <tr><td>現金</td><td style="text-align:right;font-family:var(--mono);color:var(--accent);">${fmt(r.twCash)}</td></tr>
+    ${s.twBanks.map(b=>`<tr><td>${b}</td><td style="text-align:right;font-family:var(--mono);color:var(--accent);">${fmt(r.twBanks[b]||0)}</td></tr>`).join('')}
+    </tbody></table>
+  </div>`;
+
+  // CC
+  html += `<div class="card" style="margin-bottom:12px;">
+    <div class="card-title">信用卡未繳</div>
+    <table class="tbl"><thead><tr><th>信用卡</th><th style="text-align:right;">未繳</th></tr></thead><tbody>
+    ${s.creditCards.map(c=>`<tr><td>${c}</td><td style="text-align:right;font-family:var(--mono);color:${(r.cc[c]||0)>0?'var(--red)':'var(--t3)'};">${fmt(r.cc[c]||0)}</td></tr>`).join('')}
+    </tbody></table>
+  </div>`;
+
+  // AU Summary
+  html += `<div class="section-hdr" style="color:var(--blue);">🇦🇺 澳幣 AUD</div>`;
+  html += `<div class="summary-grid">
+    <div class="sum-card au"><div class="sum-label">存款總額</div><div class="sum-val au">${fmt(r.auTotal,'AUD')}</div><div class="sum-currency">含現金</div></div>
+    <div class="sum-card au"><div class="sum-label">現金</div><div class="sum-val au">${fmt(r.auCash,'AUD')}</div><div class="sum-currency">AUD</div></div>
+  </div>`;
+
+  // AU Banks
+  html += `<div class="card" style="margin-bottom:12px;">
+    <div class="card-title">澳幣帳戶餘額</div>
+    <table class="tbl"><thead><tr><th>帳戶</th><th style="text-align:right;">餘額</th></tr></thead><tbody>
+    <tr><td>現金（AUD）</td><td style="text-align:right;font-family:var(--mono);color:var(--blue);">${fmt(r.auCash,'AUD')}</td></tr>
+    ${s.auBanks.map(b=>`<tr><td>${b}</td><td style="text-align:right;font-family:var(--mono);color:var(--blue);">${fmt(r.auBanks[b]||0,'AUD')}</td></tr>`).join('')}
+    </tbody></table>
+  </div>`;
+
+  document.getElementById('ov-content').innerHTML = html;
 }
 
-// ════════════════════════════════════════════════════
-//  LEDGER — 只顯示主帳交易
-// ════════════════════════════════════════════════════
-const EXPENSE_CATS=new Set(['飲食','服飾','交通','娛樂','醫療','居住','雜支','購物']);
+// ════════════════════════════════════════
+// LEDGER
+// ════════════════════════════════════════
+function fillLedgerFilters(){
+  const s = DB.settings;
+  const months = new Set(DB.transactions.map(t=>t.date?.slice(0,7)).filter(Boolean));
+  const mSel = document.getElementById('lf-month');
+  const cur = mSel.value;
+  mSel.innerHTML = '<option value="">全部月份</option>' + [...months].sort().reverse().map(m=>`<option ${m===cur?'selected':''}>${m}</option>`).join('');
+
+  const cats = ['全部類別',...s.categories,'收入','代墊款','代墊回款','內部轉帳','信用卡費','不計統計','押金','押金退回'];
+  document.getElementById('lf-cat').innerHTML = cats.map((c,i)=>`<option value="${i===0?'':c}">${c}</option>`).join('');
+
+  const allAccts = [...s.twBanks,...s.auBanks,...s.creditCards,'現金（TWD）','現金（AUD）'];
+  document.getElementById('lf-acct').innerHTML = '<option value="">全部帳戶</option>' + allAccts.map(a=>`<option>${a}</option>`).join('');
+}
 
 function renderLedger(){
-  const mSel=document.getElementById('f-month');
-  const cSel=document.getElementById('f-cat');
-  const pSel=document.getElementById('f-pay');
-  const q=document.getElementById('f-search').value.toLowerCase();
+  const month = document.getElementById('lf-month').value;
+  const cat = document.getElementById('lf-cat').value;
+  const acct = document.getElementById('lf-acct').value;
+  const curr = document.getElementById('lf-curr').value;
 
-  if(mSel.options.length<=1){
-    [...new Set(DB.transactions.map(t=>t.date?.slice(0,7)).filter(Boolean))].sort().reverse()
-      .forEach(m=>mSel.add(new Option(m,m)));
+  let txs = [...DB.transactions].sort((a,b)=>b.date?.localeCompare(a.date));
+  if(month) txs = txs.filter(t=>t.date?.startsWith(month));
+  if(cat) txs = txs.filter(t=>t.cat===cat);
+  if(acct){
+    txs = txs.filter(t=>{
+      const a = acct.replace('（TWD）','').replace('（AUD）','');
+      return t.payMethod===a || t.ccFrom===a || t.intFrom===a || t.intTo===a || t.ccCard===a;
+    });
   }
-  if(cSel.options.length<=2) DB.settings.categories.forEach(c=>cSel.add(new Option(c,c)));
-  if(pSel.options.length<=1){
-    // 所有帳戶+信用卡
-    [...DB.settings.creditCards,...DB.settings.banks,'現金'].forEach(p=>pSel.add(new Option(p,p)));
-  }
+  if(curr) txs = txs.filter(t=>(t.currency||'TWD')===curr);
 
-  const mf=mSel.value, cf=cSel.value, pf=pSel.value;
-  const isCC=DB.settings.creditCards.includes(pf);
+  if(!txs.length){ document.getElementById('tx-list').innerHTML='<div class="empty">沒有符合的記錄</div>'; return; }
 
-  // 顯示/隱藏信用卡對帳區
-  const ccBar=document.getElementById('cc-statement-bar');
-  ccBar.style.display=isCC?'flex':'none';
+  const NON_EXPENSE = ['收入','代墊回款','內部轉帳','信用卡費','押金退回'];
+  const NON_DEDUCT = ['代墊款','押金'];
 
-  const ccStart=document.getElementById('f-cc-start')?.value||'';
-  const ccEnd=document.getElementById('f-cc-end')?.value||'';
+  document.getElementById('tx-list').innerHTML = txs.map((tx,i) => {
+    const ri = DB.transactions.indexOf(tx);
+    const curr = tx.currency || 'TWD';
+    const currLabel = curr === 'AUD' ? 'AUD' : 'TWD';
+    let amtStr, payStr = tx.payMethod||'';
 
-  const allTxs=[...DB.transactions].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).filter(tx=>{
-    if(mf&&!tx.date?.startsWith(mf)) return false;
-    if(cf==='__expense__'){ if(!EXPENSE_CATS.has(tx.cat)) return false; }
-    else if(cf&&tx.cat!==cf) return false;
-    if(pf&&tx.payMethod!==pf&&tx.intFrom!==pf&&tx.ccCard!==pf) return false;
-    if(isCC&&ccStart&&tx.date<ccStart) return false;
-    if(isCC&&ccEnd&&tx.date>ccEnd) return false;
-    if(q&&!JSON.stringify(tx).toLowerCase().includes(q)) return false;
-    return true;
-  });
+    if(tx.cat==='收入') amtStr=`<span class="tx-amt in">+${fmt(tx.amount,curr)}</span>`;
+    else if(tx.cat==='代墊回款'||tx.cat==='押金退回') amtStr=`<span class="tx-amt in">+${fmt(tx.amount,curr)}</span>`;
+    else if(tx.cat==='內部轉帳') { amtStr=`<span class="tx-amt neutral">⇄ ${fmt(tx.intAmt,curr)}</span>`; payStr=`${tx.intFrom}→${tx.intTo}`; }
+    else if(tx.cat==='信用卡費') { amtStr=`<span class="tx-amt out">-${fmt(tx.ccAmt,curr)}</span>`; payStr=`${tx.ccFrom}→${tx.ccCard}`; }
+    else amtStr=`<span class="tx-amt out">-${fmt(tx.amount,curr)}</span>`;
 
-  // 信用卡加總
-  if(isCC){
-    const total=allTxs.reduce((a,tx)=>{
-      if(tx.payMethod===pf||tx.ccCard===pf) return a+Number(tx.amount||tx.ccAmt||0);
-      return a;
-    },0);
-    document.getElementById('cc-total').textContent='$'+Math.round(total).toLocaleString();
-  }
-
-  const txs=allTxs.slice(0,ledgerShowing);
-  const list=document.getElementById('tx-list');
-  if(!txs.length){list.innerHTML='<div class="empty">沒有符合的記錄</div>';return;}
-
-  list.innerHTML=txs.map(tx=>{
-    const realIdx=DB.transactions.indexOf(tx);
-    const amt=Number(tx.amount)||0;
-    let amtStr='', payStr='', catLabel=tx.cat||'';
-
-    if(tx.cat==='內部轉帳'){
-      amtStr=`<span class="tx-amt neutral">⇄ $${Number(tx.intAmt||0).toLocaleString()}</span>`;
-      payStr=`${tx.intFrom}→${tx.intTo}`;
-    } else if(tx.cat==='信用卡費'){
-      amtStr=`<span class="tx-amt neutral">繳 $${Number(tx.ccAmt||0).toLocaleString()}</span>`;
-      payStr=tx.ccCard;
-    } else if(['收入','代墊回款'].includes(tx.cat)){
-      amtStr=`<span class="tx-amt in">+$${amt.toLocaleString()}</span>`;
-      payStr=tx.payMethod;
-    } else if(tx.cat==='餐費扣款'){
-      amtStr=`<span class="tx-amt neutral">$${amt.toLocaleString()}</span>`;
-      payStr=tx.payMethod;
-    } else if(tx.cat==='代墊款'){
-      amtStr=`<span class="tx-amt" style="color:var(--yellow);">$${amt.toLocaleString()}</span>`;
-      payStr=tx.payMethod;
-    } else {
-      amtStr=`<span class="tx-amt out">-$${amt.toLocaleString()}</span>`;
-      payStr=tx.payMethod;
-    }
-
-    return `<div class="tx-row main-row">
+    const catClass = 'b-' + (tx.cat||'').replace(/\s/g,'');
+    return `<div class="tx-row">
       <div class="tx-date">${tx.date||''}</div>
-      <div><span class="tx-badge b-${tx.cat?.replace(/\s/g,'')||''}">${catLabel}</span></div>
-      <div>
-        <div class="tx-desc">${tx.item||''}</div>
-        <div class="tx-sub">${tx.note||''}</div>
+      <div><span class="tx-badge ${catClass}">${tx.cat||''}</span></div>
+      <div class="tx-desc">
+        <div class="tx-desc-main">${tx.item||''}</div>
+        ${tx.note?`<div class="tx-desc-sub">${tx.note}</div>`:''}
       </div>
       ${amtStr}
-      <div class="tx-pay">${payStr}</div>
-      <button class="tx-del" onclick="delTx(${realIdx})" title="刪除">×</button>
+      <div class="tx-curr" style="color:${curr==='AUD'?'var(--blue)':'var(--t3)'};">${currLabel}</div>
+      <button class="tx-del" onclick="delTx(${ri})">×</button>
     </div>`;
   }).join('');
-
-  const lm=document.getElementById('ledger-load-more');
-  if(lm) lm.style.display=allTxs.length>ledgerShowing?'block':'none';
 }
 
-function delTx(idx){
-  if(!confirm('確定刪除這筆記錄？')) return;
-  const tx=DB.transactions[idx];
-  // 如果是餐費扣款，同步刪除對應餐費明細
-  if(tx&&tx.cat==='餐費扣款'&&tx._mealSync){
-    const mi=DB.mealTxs.findIndex(m=>m.date===tx.date&&m.type==='split'&&
-      m.debtors&&m.debtors[0]&&m.debtors[0].who===tx.item?.replace(' 餐費',''));
-    if(mi!==-1) DB.mealTxs.splice(mi,1);
-  }
-  // 如果是代墊款，同步刪除代墊追蹤
-  if(tx&&tx.cat==='代墊款'){
-    const whoName=tx.item?.replace('代墊-','');
-    const ai=DB.advances.findIndex(a=>a.date===tx.date&&a.who===whoName&&!a.settled);
-    if(ai!==-1) DB.advances.splice(ai,1);
-  }
-  DB.transactions.splice(idx,1);
-  save(); resetLedgerFilters(); renderLedger(); renderOverview();
+// ════════════════════════════════════════
+// ADVANCE & DEPOSIT
+// ════════════════════════════════════════
+function renderAdvance(){
+  const pending = DB.advances.filter(a=>!a.settled);
+  const settled = DB.advances.filter(a=>a.settled);
+  const deposits = DB.deposits||[];
+
+  // Pending total by currency
+  const twPending = pending.filter(a=>(a.currency||'TWD')==='TWD').reduce((s,a)=>s+Number(a.amount),0);
+  const auPending = pending.filter(a=>a.currency==='AUD').reduce((s,a)=>s+Number(a.amount),0);
+  let totalStr = '';
+  if(twPending) totalStr += fmt(twPending) + ' ';
+  if(auPending) totalStr += fmt(auPending,'AUD');
+  document.getElementById('adv-pending-total').textContent = totalStr || '$0';
+
+  document.getElementById('adv-pending').innerHTML = pending.length ?
+    pending.map(a=>`<div class="adv-card">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <span style="font-weight:600;">${a.who}</span>
+          <span class="badge-pending" style="margin-left:8px;">待回款</span>
+          <span style="font-size:10px;color:${(a.currency||'TWD')==='AUD'?'var(--blue)':'var(--accent)'};margin-left:4px;">${a.currency||'TWD'}</span>
+        </div>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--yellow);">${fmt(a.amount,a.currency||'TWD')}</span>
+      </div>
+      <div class="adv-meta">${a.date} · ${a.desc||''}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-ghost" style="flex:1;font-size:11px;" onclick="openRepayModal('${a.id}')">登記回款</button>
+        <button class="btn btn-danger" style="font-size:11px;" onclick="delAdv('${a.id}')">刪除</button>
+      </div>
+    </div>`).join('') : '<div class="empty">無待回款記錄</div>';
+
+  document.getElementById('deposit-list').innerHTML = deposits.filter(d=>!d.returned).length ?
+    deposits.filter(d=>!d.returned).map(d=>`<div class="adv-card">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <span style="font-weight:600;">${d.desc||'押金'}</span>
+          <span class="badge-deposit" style="margin-left:8px;">押金</span>
+          <span style="font-size:10px;color:${(d.currency||'TWD')==='AUD'?'var(--blue)':'var(--accent)'};margin-left:4px;">${d.currency||'TWD'}</span>
+        </div>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--orange);">${fmt(d.amount,d.currency||'TWD')}</span>
+      </div>
+      <div class="adv-meta">${d.date} · ${d.note||''}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-ghost" style="flex:1;font-size:11px;" onclick="openDepositRepayModal('${d.id}')">登記退回</button>
+        <button class="btn btn-danger" style="font-size:11px;" onclick="delDeposit('${d.id}')">刪除</button>
+      </div>
+    </div>`).join('') : '<div class="empty">無押金記錄</div>';
+
+  document.getElementById('deposit-list').innerHTML +=
+    `<button class="btn btn-ghost" style="width:100%;margin-top:10px;" onclick="openDepositModal()">＋ 新增押金</button>`;
+
+  document.getElementById('adv-settled').innerHTML = [...settled,...deposits.filter(d=>d.returned)].length ?
+    [...settled,...deposits.filter(d=>d.returned)].map(a=>`<div class="adv-card" style="opacity:.5;">
+      <div style="display:flex;justify-content:space-between;">
+        <div>
+          <span>${a.who||a.desc||''}</span>
+          <span class="badge-settled" style="margin-left:8px;">${a.returned?'押金已退':'已回款'}</span>
+        </div>
+        <span style="font-family:var(--mono);color:var(--t2);">${fmt(a.amount,a.currency||'TWD')}</span>
+      </div>
+      <div class="adv-meta">${a.date}</div>
+    </div>`).join('') : '<div class="empty">無已結清記錄</div>';
 }
 
-function resetLedgerFilters(){
-  const mSel=document.getElementById('f-month');
-  const pSel=document.getElementById('f-pay');
-  while(mSel.options.length>1) mSel.remove(1);
-  while(pSel.options.length>1) pSel.remove(1);
-  const cSel=document.getElementById('f-cat');
-  while(cSel.options.length>2) cSel.remove(2);
-}
-
-// ════════════════════════════════════════════════════
-//  TX MODAL — 新設計
-// ════════════════════════════════════════════════════
-function openTxModal(){
-  const today=new Date().toISOString().slice(0,10);
-  document.getElementById('tx-date').value=today;
-  document.getElementById('tx-total').value='';
-  document.getElementById('tx-mine').value='';
-  document.getElementById('tx-item').value='';
-  document.getElementById('tx-note').value='';
-  document.getElementById('tx-count-stat').checked=true;
-  document.getElementById('tx-meal-check').checked=false;
-  document.getElementById('tx-meal-in-check').checked=false;
-  document.getElementById('tx-adv-check').checked=false;
-  document.getElementById('tx-meal-rows').style.display='none';
-  document.getElementById('tx-meal-rows').innerHTML='';
-  document.getElementById('tx-meal-add-btn').style.display='none';
-  document.getElementById('tx-meal-in-rows').style.display='none';
-  document.getElementById('tx-meal-in-rows').innerHTML='';
-  document.getElementById('tx-meal-in-add-btn').style.display='none';
-  document.getElementById('tx-adv-rows').style.display='none';
-  document.getElementById('tx-adv-rows').innerHTML='';
-  document.getElementById('tx-adv-add-btn').style.display='none';
-  document.getElementById('tx-income-amt').value='';
-  document.getElementById('tx-int-amt').value='';
-  document.getElementById('tx-cc-amt').value='';
-  document.getElementById('tx-alloc-bar').style.display='none';
-
-  const allPay=[...DB.settings.creditCards,...DB.settings.banks,'現金'];
-  const payMethod=document.getElementById('tx-pay-method');
-  payMethod.innerHTML=
-    allPay.map(p=>`<option value="${p}">${p}</option>`).join('')+
-    `<optgroup label="─────────">
-      <option value="__income__">💰 收入</option>
-      <option value="__internal__">⇄ 內部轉帳</option>
-      <option value="__ccfee__">💳 繳信用卡費</option>
-    </optgroup>`;
-
-  ['tx-int-from','tx-int-to','tx-income-acc','tx-cc-from'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.innerHTML=allPay.map(p=>`<option>${p}</option>`).join('');
-  });
-  document.getElementById('tx-cc-card').innerHTML=
-    DB.settings.creditCards.map(c=>`<option>${c}</option>`).join('');
-
-  const catSel=document.getElementById('tx-cat');
-  const expCats=DB.settings.categories.filter(c=>
-    !['收入','代墊回款','內部轉帳','信用卡費','餐費扣款','零用金支出'].includes(c));
-  catSel.innerHTML=expCats.map(c=>`<option>${c}</option>`).join('');
-
-  onTxStatChange();
-  onTxPayChange();
-  document.getElementById('modal-tx').classList.add('open');
-}
-
-function onTxTotalChange(){
-  const total=Number(document.getElementById('tx-total').value)||0;
-  const mine=document.getElementById('tx-mine');
-  if(mine.value===''||Number(mine.value)>total) mine.value=total||'';
-  updateTxAlloc();
-}
-
-function onTxMineChange(){updateTxAlloc();}
-
-function onTxStatChange(){
-  const checked=document.getElementById('tx-count-stat').checked;
-  document.getElementById('tx-cat-group').style.display=checked?'block':'none';
-}
-
-function updateTxAlloc(){
-  const total=Number(document.getElementById('tx-total').value)||0;
-  if(!total){document.getElementById('tx-alloc-bar').style.display='none';return;}
-  document.getElementById('tx-alloc-bar').style.display='block';
-
-  const mine=Number(document.getElementById('tx-mine').value)||0;
-  let mealTotal=0,mealInTotal=0,advTotal=0;
-  if(document.getElementById('tx-meal-check').checked){
-    [...document.getElementById('tx-meal-rows').children].forEach(row=>{
-      mealTotal+=Number(row.querySelector('input[type=number]').value)||0;
-    });
-  }
-  if(document.getElementById('tx-meal-in-check').checked){
-    [...document.getElementById('tx-meal-in-rows').children].forEach(row=>{
-      mealInTotal+=Number(row.querySelector('input[type=number]').value)||0;
-    });
-  }
-  if(document.getElementById('tx-adv-check').checked){
-    [...document.getElementById('tx-adv-rows').children].forEach(row=>{
-      advTotal+=Number(row.querySelector('input[type=number]').value)||0;
-    });
-  }
-  const allocated=mine+mealTotal+advTotal;
-  const el=document.getElementById('tx-alloc-total');
-  el.textContent=`$${allocated.toLocaleString()} / $${total.toLocaleString()}`;
-  el.style.color=allocated===total?'var(--green)':allocated>total?'var(--red)':'var(--yellow)';
-}
-
-function onTxPayChange(){
-  const pay=document.getElementById('tx-pay-method').value;
-  const isIncome=pay==='__income__';
-  const isInternal=pay==='__internal__';
-  const isCCFee=pay==='__ccfee__';
-  const isNormal=!isIncome&&!isInternal&&!isCCFee;
-  document.getElementById('tx-income-area').style.display=isIncome?'block':'none';
-  document.getElementById('tx-internal-area').style.display=isInternal?'block':'none';
-  document.getElementById('tx-ccfee-area').style.display=isCCFee?'block':'none';
-  document.getElementById('tx-amt-group').style.display=isNormal?'block':'none';
-  document.getElementById('tx-mine-group').style.display=isNormal?'block':'none';
-  document.getElementById('tx-cat-group').style.display=isNormal&&document.getElementById('tx-count-stat').checked?'block':'none';
-  document.getElementById('tx-item-group').style.display=isNormal?'block':'none';
-  document.getElementById('tx-stat-group').style.display=isNormal?'block':'none';
-  document.getElementById('tx-meal-addon').style.display=isNormal?'block':'none';
-  document.getElementById('tx-adv-addon').style.display=isNormal?'block':'none';
-  if(!isNormal) document.getElementById('tx-alloc-bar').style.display='none';
-}
-
-function onTxMealInCheck(){
-  const checked=document.getElementById('tx-meal-in-check').checked;
-  document.getElementById('tx-meal-in-rows').style.display=checked?'block':'none';
-  document.getElementById('tx-meal-in-add-btn').style.display=checked?'block':'none';
-  if(checked&&document.getElementById('tx-meal-in-rows').children.length===0) addTxMealInRow();
-  updateTxAlloc();
-}
-
-function addTxMealInRow(){
-  const div=document.createElement('div');
-  div.style='display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px;align-items:center;';
-  div.innerHTML=`
-    <select style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-      ${DB.settings.persons.map(p=>`<option>${p}</option>`).join('')}
-    </select>
-    <input type="number" placeholder="金額" min="0" oninput="updateTxAlloc()"
-      style="background:var(--s2);border:1px solid var(--border);color:var(--green);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-    <button type="button" onclick="this.parentElement.remove();updateTxAlloc()"
-      style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;">×</button>`;
-  document.getElementById('tx-meal-in-rows').appendChild(div);
-}
-
-function onTxMealCheck(){
-  const checked=document.getElementById('tx-meal-check').checked;
-  document.getElementById('tx-meal-rows').style.display=checked?'block':'none';
-  document.getElementById('tx-meal-add-btn').style.display=checked?'block':'none';
-  if(checked&&document.getElementById('tx-meal-rows').children.length===0) addTxMealRow();
-  updateTxAlloc();
-}
-
-function onTxAdvCheck(){
-  const checked=document.getElementById('tx-adv-check').checked;
-  document.getElementById('tx-adv-rows').style.display=checked?'block':'none';
-  document.getElementById('tx-adv-add-btn').style.display=checked?'block':'none';
-  if(checked&&document.getElementById('tx-adv-rows').children.length===0) addTxAdvRow();
-  updateTxAlloc();
-}
-
-function addTxMealRow(){
-  const div=document.createElement('div');
-  div.style='display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px;align-items:center;';
-  div.innerHTML=`
-    <select style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-      ${DB.settings.persons.map(p=>`<option>${p}</option>`).join('')}
-    </select>
-    <input type="number" placeholder="金額" min="0" oninput="updateTxAlloc()"
-      style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-    <button type="button" onclick="this.parentElement.remove();updateTxAlloc()"
-      style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;">×</button>`;
-  document.getElementById('tx-meal-rows').appendChild(div);
-}
-
-function addTxAdvRow(){
-  const allPersons=[...DB.settings.persons,'其他'];
-  const div=document.createElement('div');
-  div.className='adv-row';
-  div.style='display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px;align-items:start;';
-  div.innerHTML=`
-    <select onchange="onTxAdvWhoChange(this)"
-      style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-      ${allPersons.map(p=>`<option>${p}</option>`).join('')}
-    </select>
-    <input type="number" placeholder="金額" min="0" oninput="updateTxAlloc()"
-      style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-    <button type="button" onclick="this.closest('.adv-row').remove();updateTxAlloc()"
-      style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;">×</button>
-    <input type="text" class="adv-name-inp" placeholder="對象姓名"
-      style="display:none;grid-column:1/3;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">`;
-  document.getElementById('tx-adv-rows').appendChild(div);
-}
-
-function onTxAdvWhoChange(sel){
-  const nameInp=sel.closest('.adv-row').querySelector('.adv-name-inp');
-  if(nameInp) nameInp.style.display=sel.value==='其他'?'block':'none';
-}
-
-function saveTx(){
-  const date=document.getElementById('tx-date').value;
-  const note=document.getElementById('tx-note').value;
-  const pay=document.getElementById('tx-pay-method').value;
-  if(!date){alert('請填日期');return;}
-
-  if(pay==='__internal__'){
-    const amt=Number(document.getElementById('tx-int-amt').value)||0;
-    if(!amt){alert('請填金額');return;}
-    DB.transactions.push({cat:'內部轉帳',date,note,amount:amt,intAmt:amt,
-      intFrom:document.getElementById('tx-int-from').value,
-      intTo:document.getElementById('tx-int-to').value});
-    save();closeModal('modal-tx');renderOverview();renderLedger();return;
-  }
-  if(pay==='__ccfee__'){
-    const amt=Number(document.getElementById('tx-cc-amt').value)||0;
-    if(!amt){alert('請填金額');return;}
-    DB.transactions.push({cat:'信用卡費',date,note,amount:amt,ccAmt:amt,
-      ccCard:document.getElementById('tx-cc-card').value,
-      ccFrom:document.getElementById('tx-cc-from').value});
-    save();closeModal('modal-tx');renderOverview();renderLedger();return;
-  }
-  if(pay==='__income__'){
-    const amt=Number(document.getElementById('tx-income-amt').value)||0;
-    if(!amt){alert('請填金額');return;}
-    DB.transactions.push({cat:'收入',date,note,amount:amt,
-      payMethod:document.getElementById('tx-income-acc').value});
-    save();closeModal('modal-tx');renderOverview();renderLedger();return;
-  }
-
-  // 一般支出
-  const total=Number(document.getElementById('tx-total').value)||0;
-  const mineEl=document.getElementById('tx-mine');
-  const mine=mineEl.value===''?total:Number(mineEl.value);
-  const cat=document.getElementById('tx-cat').value;
-  const item=document.getElementById('tx-item').value;
-  const countStat=document.getElementById('tx-count-stat').checked;
-  if(!total){alert('請填金額');return;}
-
-  // 計算餐費、餐費存入、代墊加總
-  let mealTotal=0,mealInTotal=0,advTotal=0;
-  if(document.getElementById('tx-meal-check').checked){
-    [...document.getElementById('tx-meal-rows').children].forEach(row=>{
-      mealTotal+=Number(row.querySelector('input[type=number]').value)||0;
-    });
-  }
-  if(document.getElementById('tx-meal-in-check').checked){
-    [...document.getElementById('tx-meal-in-rows').children].forEach(row=>{
-      mealInTotal+=Number(row.querySelector('input[type=number]').value)||0;
-    });
-  }
-  if(document.getElementById('tx-adv-check').checked){
-    [...document.getElementById('tx-adv-rows').children].forEach(row=>{
-      advTotal+=Number(row.querySelector('input[type=number]').value)||0;
-    });
-  }
-  const allocated=mine+mealTotal+advTotal;
-  if(allocated!==total){
-    if(!confirm(`分配金額 $${allocated} 不等於總金額 $${total}，確定繼續？`)) return;
-  }
-
-  // 主帳記錄（我的支出）
-  DB.transactions.push({
-    cat:countStat?cat:'不計統計',
-    date,item,note,amount:mine,payMethod:pay
-  });
-
-  // 從同事餐費扣款（餐費池-）
-  if(document.getElementById('tx-meal-check').checked){
-    [...document.getElementById('tx-meal-rows').children].forEach(row=>{
-      const who=row.querySelector('select').value;
-      const mAmt=Number(row.querySelector('input[type=number]').value)||0;
-      if(!who||!mAmt) return;
-      DB.transactions.push({cat:'餐費扣款',date,item:`${who} 餐費`,note,amount:mAmt,payMethod:pay,_mealSync:true});
-      DB.mealTxs.push({id:genId('M'),type:'split',date,desc:item||note,
-        payer:'申瑋',payerTotal:mAmt,amount:mAmt,debtors:[{who,amt:mAmt}]});
-    });
-  }
-
-  // 存入同事餐費（我出錢，餐費池+，不另記主帳）
-  if(document.getElementById('tx-meal-in-check').checked){
-    [...document.getElementById('tx-meal-in-rows').children].forEach(row=>{
-      const who=row.querySelector('select').value;
-      const mAmt=Number(row.querySelector('input[type=number]').value)||0;
-      if(!who||!mAmt) return;
-      // 只更新餐費池，現金已在主帳記錄中扣除
-      DB.mealTxs.push({id:genId('M'),type:'charge',date,desc:item||note,
-        chargeWho:who,amount:mAmt,chargeMethod:'僅餐費'});
-    });
-  }
-
-  // 代墊
-  if(document.getElementById('tx-adv-check').checked){
-    [...document.getElementById('tx-adv-rows').children].forEach(row=>{
-      const whoSel=row.querySelector('select').value;
-      const whoName=whoSel==='其他'?(row.querySelector('.adv-name-inp')?.value||'其他'):whoSel;
-      const aAmt=Number(row.querySelector('input[type=number]').value)||0;
-      if(!whoName||!aAmt) return;
-      DB.transactions.push({cat:'代墊款',date,item:`代墊-${whoName}`,note,amount:aAmt,payMethod:pay});
-      DB.advances.push({id:Date.now()+Math.random(),date,who:whoName,amount:aAmt,desc:item||note,settled:false});
-    });
-  }
-
-  save();closeModal('modal-tx');renderOverview();renderLedger();
-}
-
-// ════════════════════════════════════════════════════
-//  CHARTS
-// ════════════════════════════════════════════════════
-let chMonthly,chPie,chTrend;
+// ════════════════════════════════════════
+// CHARTS
+// ════════════════════════════════════════
 function renderCharts(){
-  const yr=document.getElementById('c-year').value||'2026';
-  const cm=document.getElementById('c-month');
-  if(cm.options.length<=1) for(let i=1;i<=12;i++) cm.add(new Option(i+'月',String(i).padStart(2,'0')));
-  const mf=cm.value;
+  const year = document.getElementById('cf-year').value || new Date().getFullYear();
+  const curr = document.getElementById('cf-curr').value || 'TWD';
+  const txs = DB.transactions.filter(t=>(t.currency||'TWD')===curr && t.date?.startsWith(year));
 
-  const EXPENSE_CATS=DB.settings.categories.filter(c=>!['收入','代墊回款','內部轉帳','代墊款','信用卡費'].includes(c));
-  const palette=['#7c6af7','#e8845a','#4ecb8d','#e85a7a','#f7c86a','#4ea0cb','#a07cf7','#6af7c8','#f76a7c','#6af7b0'];
-
-  const txs=DB.transactions.filter(tx=>{
-    if(!tx.date?.startsWith(yr))return false;
-    if(mf&&!tx.date.startsWith(`${yr}-${mf}`))return false;
-    return true;
-  });
-
-  const REAL_EXPENSE_CATS=new Set(['飲食','服飾','交通','娛樂','醫療','居住','雜支','購物']);
-  const monthly={};
-  for(let m=1;m<=12;m++){const k=`${yr}-${String(m).padStart(2,'0')}`;monthly[k]={income:0,expense:0};}
+  const REAL_EXP = new Set(DB.settings.categories);
+  const monthly = {};
+  for(let m=1;m<=12;m++){
+    const k=`${year}-${String(m).padStart(2,'0')}`;
+    monthly[k]={income:0,expense:0};
+  }
   txs.forEach(tx=>{
-    const k=tx.date?.slice(0,7);if(!monthly[k])return;
+    const k=tx.date?.slice(0,7); if(!monthly[k]) return;
     if(tx.cat==='收入') monthly[k].income+=Number(tx.amount||0);
-    else if(REAL_EXPENSE_CATS.has(tx.cat)) monthly[k].expense+=Number(tx.amount||0);
+    else if(REAL_EXP.has(tx.cat)) monthly[k].expense+=Number(tx.amount||0);
   });
-  const labels=Object.keys(monthly).map(k=>k.slice(5)+'月');
 
-  const chartOpts={responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{color:'#9090a8',font:{size:11}}}},
-    scales:{x:{ticks:{color:'#5a5a72',maxRotation:0},grid:{color:'#2e2e3d'}},
-            y:{ticks:{color:'#5a5a72'},grid:{color:'#2e2e3d'}}}};
+  const labels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const incomes=Object.values(monthly).map(m=>m.income);
+  const expenses=Object.values(monthly).map(m=>m.expense);
 
-  if(chMonthly)chMonthly.destroy();
-  chMonthly=new Chart(document.getElementById('ch-monthly'),{
-    type:'bar',data:{labels,datasets:[
-      {label:'收入',data:Object.values(monthly).map(d=>d.income),backgroundColor:'rgba(78,203,141,.7)',borderRadius:3},
-      {label:'支出',data:Object.values(monthly).map(d=>d.expense),backgroundColor:'rgba(232,90,122,.7)',borderRadius:3},
+  if(_charts.monthly) _charts.monthly.destroy();
+  _charts.monthly = new Chart(document.getElementById('chart-monthly'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'收入',data:incomes,backgroundColor:'rgba(78,203,141,.7)',borderRadius:4},
+      {label:'支出',data:expenses,backgroundColor:'rgba(232,90,122,.7)',borderRadius:4}
     ]},
-    options:{...chartOpts}
+    options:{responsive:true,plugins:{legend:{labels:{color:'#a0a0c0'}}},
+      scales:{x:{ticks:{color:'#606080'}},y:{ticks:{color:'#606080'}}}}
   });
 
-  const ECATS=DB.settings.categories.filter(c=>!['收入','代墊回款','內部轉帳','代墊款','信用卡費'].includes(c));
-  const catTotals={};
-  ECATS.forEach(c=>catTotals[c]=0);
-  txs.forEach(tx=>{if(ECATS.includes(tx.cat))catTotals[tx.cat]+=(Number(tx.myAmount||tx.amount)||0);});
-  const catL=Object.keys(catTotals).filter(k=>catTotals[k]>0);
+  // Cat pie
+  const catData={};
+  txs.filter(t=>REAL_EXP.has(t.cat)).forEach(t=>{ catData[t.cat]=(catData[t.cat]||0)+Number(t.amount||0); });
+  const catLabels=Object.keys(catData);
+  const catVals=Object.values(catData);
+  const colors=['#7c6af7','#4ecb8d','#5ab4f7','#f7c86a','#e85a7a','#f7a05a','#a0a0c0','#e8845a'];
 
-  if(chPie)chPie.destroy();
-  chPie=new Chart(document.getElementById('ch-pie'),{
-    type:'doughnut',
-    data:{labels:catL,datasets:[{data:catL.map(k=>catTotals[k]),backgroundColor:palette,borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:'bottom',labels:{color:'#9090a8',font:{size:10},boxWidth:10}}}}
-  });
-
-  const trendDS=ECATS.map((cat,i)=>({
-    label:cat,
-    data:Object.keys(monthly).map(k=>txs.filter(tx=>tx.date?.startsWith(k)&&tx.cat===cat).reduce((a,tx)=>a+Number(tx.myAmount||tx.amount||0),0)),
-    borderColor:palette[i%palette.length],backgroundColor:'transparent',tension:.4,pointRadius:2
-  })).filter(ds=>ds.data.some(v=>v>0));
-
-  if(chTrend)chTrend.destroy();
-  chTrend=new Chart(document.getElementById('ch-trend'),{
-    type:'line',data:{labels,datasets:trendDS},
-    options:{...chartOpts,plugins:{legend:{labels:{color:'#9090a8',font:{size:10},boxWidth:10}}}}
-  });
-}
-
-// ════════════════════════════════════════════════════
-//  MEAL
-// ════════════════════════════════════════════════════
-let mealShowing=50;
-
-function renderMeal(){
-  const bals=computePersonBals();
-  const pool=computeMealPool();
-  const fmt=n=>(n>=0?'+':'')+' $'+Math.round(n).toLocaleString();
-  const emojis=['🌸','🍊','🌿','⭐','🔶'];
-
-  document.getElementById('meal-persons').innerHTML=
-    `<div class="person-card pool-card">
-      <div class="stat-label" style="margin-bottom:6px;">餐費池（同事儲值總額）</div>
-      <div class="person-bal ${pool>=0?'pos':'neg'}" style="font-size:22px;">$${Math.round(pool).toLocaleString()}</div>
-    </div>`+
-    DB.settings.persons.map((p,i)=>{
-      const b=bals[p]||0;
-      return`<div class="person-card">
-        <div class="person-avatar" style="background:${['#7c6af730','#e8845a30','#4ecb8d30','#f7c86a30'][i%4]}">${emojis[i%emojis.length]}</div>
-        <div class="person-name">${p}</div>
-        <div class="person-bal ${b>=0?'pos':'neg'}">${fmt(b)}</div>
-        <div class="text-muted mt8">${b>=0?'餘額':'欠款'}</div>
-      </div>`;
-    }).join('');
-
-  renderMealList();
-}
-
-function renderMealList(){
-  const list=document.getElementById('meal-list');
-  const allTxs=[...DB.mealTxs].reverse();
-  if(!allTxs.length){list.innerHTML='<div class="empty">尚無餐費記錄</div>';return;}
-
-  const tLabel={charge:'儲值',split:'墊款',repay:'提領/還款','petty-in':'零用金轉入'};
-  const tColor={charge:'var(--green)',split:'var(--yellow)',repay:'var(--red)','petty-in':'var(--orange)'};
-
-  const showing=allTxs.slice(0,mealShowing);
-  list.innerHTML=showing.map((tx,i)=>{
-    const ri=DB.mealTxs.length-1-i;
-    let detail='';
-    if(tx.type==='charge'){
-      const method=tx.chargeMethod==='僅餐費'?'零用金轉入':tx.chargeMethod;
-      detail=`${tx.chargeWho} 儲值（${method}）`;
-    }
-    else if(tx.type==='split'){
-      const debt=(tx.debtors||[]).map(d=>`${d.who} -$${Number(d.amt).toLocaleString()}`).join('、');
-      detail=`${tx.payer} 墊付 → ${debt}`;
-    }
-    else if(tx.type==='repay') detail=`${tx.repayWho} 提領（${tx.repayMethod}）`;
-    else if(tx.type==='petty-in') detail=`零用金轉入 → ${tx.targetWho||''}`;
-    return`<div class="tx-row" style="grid-template-columns:auto auto auto 1fr auto auto auto;padding:10px 14px;gap:10px;">
-      <span style="font-size:10px;font-family:var(--mono);color:var(--accent);white-space:nowrap;">${tx.id||'—'}</span>
-      <span class="tx-date" style="white-space:nowrap;">${tx.date||''}</span>
-      <span style="color:${tColor[tx.type]};font-size:11px;font-weight:600;white-space:nowrap;">${tLabel[tx.type]||tx.type}</span>
-      <div style="min-width:0;">
-        <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${detail}</div>
-        ${tx.desc?`<div style="font-size:12px;color:var(--t2);margin-top:3px;background:var(--s2);display:inline-block;padding:1px 7px;border-radius:4px;">📝 ${tx.desc}</div>`:''}
-      </div>
-      <span class="tx-amt" style="color:var(--t2);white-space:nowrap;">$${Number(tx.amount||tx.payerTotal||0).toLocaleString()}</span>
-      <button class="tx-del" onclick="delMealTx(${ri})">×</button>
-    </div>`;
-  }).join('');
-
-  const lm=document.getElementById('meal-load-more');
-  lm.style.display=allTxs.length>mealShowing?'block':'none';
-}
-
-function loadMoreMeal(){mealShowing+=50;renderMealList();}
-
-// ── 餐費報表（網頁內顯示，給同事看）──
-function showMealReport(){
-  const area=document.getElementById('meal-report-area');
-  area.style.display='block';
-  // 預設區間：本月
-  const now=new Date().toISOString().slice(0,10);
-  const ym=now.slice(0,7);
-  if(!document.getElementById('rpt-start').value) document.getElementById('rpt-start').value=ym+'-01';
-  if(!document.getElementById('rpt-end').value) document.getElementById('rpt-end').value=now;
-  renderMealReport();
-  area.scrollIntoView({behavior:'smooth'});
-}
-
-function renderMealReport(){
-  const start=document.getElementById('rpt-start').value;
-  const end=document.getElementById('rpt-end').value;
-  const pettyOnly=document.getElementById('rpt-petty-only')?.checked||false;
-
-  // 計算每個人的完整流水帳（含區間外的起始餘額）
-  const allPersons=[...DB.settings.persons,'申瑋'];
-  const palette2=['#7c6af7','#e8845a','#4ecb8d','#f7c86a','#e85a7a'];
-
-  // 先算出截至 start 之前各人的餘額（作為期初餘額）
-  function getPersonLedger(person){
-    let runBal=0;
-    const entries=[];
-
-    DB.mealTxs.forEach(tx=>{
-      let change=0;
-      let label='', idStr=tx.id||'', fromPetty=false;
-
-      if(tx.type==='charge'&&tx.chargeWho===person){
-        change=Number(tx.amount)||0; label='儲值';
-      } else if(tx.type==='split'){
-        if(tx.payer===person){
-          change=Number(tx.payerTotal)||0; label='墊款';
-          fromPetty=tx.payer==='零用金';
-        }
-        (tx.debtors||[]).forEach(d=>{
-          if(d.who===person){
-            change=-(Number(d.amt)||0); label='消費';
-            fromPetty=tx.payer==='零用金'||tx.fromPetty||false;
-          }
-        });
-      } else if(tx.type==='repay'&&tx.repayWho===person){
-        change=-(Number(tx.amount)||0); label='提領';
-      } else if(tx.type==='petty-in'&&tx.targetWho===person){
-        change=Number(tx.amount)||0; label='零用金轉入'; fromPetty=true;
-      }
-
-      if(change===0&&label==='') return;
-      runBal+=change;
-
-      const inRange=(!start||tx.date>=start)&&(!end||tx.date<=end);
-      if(inRange){
-        entries.push({date:tx.date,label,change,runBal,desc:tx.desc||'',id:idStr,fromPetty});
-      } else if(tx.date<(start||'9')){
-        // 區間前的累計作為期初
-      }
-    });
-
-    // 重新計算期初餘額（start之前所有變動）
-    let openBal=0;
-    DB.mealTxs.forEach(tx=>{
-      if(start&&tx.date>=start) return;
-      if(tx.type==='charge'&&tx.chargeWho===person) openBal+=Number(tx.amount)||0;
-      else if(tx.type==='split'){
-        if(tx.payer===person) openBal+=Number(tx.payerTotal)||0;
-        (tx.debtors||[]).forEach(d=>{if(d.who===person) openBal-=Number(d.amt)||0;});
-      } else if(tx.type==='repay'&&tx.repayWho===person) openBal-=Number(tx.amount)||0;
-      else if(tx.type==='petty-in'&&tx.targetWho===person) openBal+=Number(tx.amount)||0;
-    });
-
-    // 重新算帶期初的流水帳
-    let bal=openBal;
-    const ledger=[];
-    const inRangeTxs=DB.mealTxs.filter(tx=>(!start||tx.date>=start)&&(!end||tx.date<=end));
-    inRangeTxs.forEach(tx=>{
-      let change=0, label='', fromPetty=false, idStr=tx.id||'';
-      if(tx.type==='charge'&&tx.chargeWho===person){
-        change=Number(tx.amount)||0; label='儲值';
-      } else if(tx.type==='split'){
-        if(tx.payer===person){
-          change=Number(tx.payerTotal)||0; label='墊款'; fromPetty=tx.fromPetty||false;
-        }
-        (tx.debtors||[]).forEach(d=>{
-          if(d.who===person){
-            change=-(Number(d.amt)||0); label='消費'; fromPetty=tx.fromPetty||false;
-          }
-        });
-      } else if(tx.type==='repay'&&tx.repayWho===person){
-        change=-(Number(tx.amount)||0); label='提領';
-      } else if(tx.type==='petty-in'&&tx.targetWho===person){
-        change=Number(tx.amount)||0; label='零用金轉入'; fromPetty=true;
-      }
-      if(!label) return;
-      bal+=change;
-      ledger.push({date:tx.date,label,change,bal,desc:tx.desc||'',id:idStr,fromPetty});
-    });
-
-    return{openBal, ledger, closeBal:bal};
-  }
-
-  const bals=computePersonBals();
-
-  document.getElementById('meal-report-content').innerHTML=
-    allPersons.map((p,i)=>{
-      const {openBal,ledger,closeBal}=getPersonLedger(p);
-      const filtered=pettyOnly?ledger.filter(r=>r.fromPetty):ledger;
-      const curBal=bals[p]??0;
-      const isSpecial=(p==='申瑋'||p==='零用金'); // 不顯示餘額
-
-      return`<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px;">
-        <!-- 人員標題 -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-          <div style="font-size:15px;font-weight:700;color:${palette2[i%palette2.length]};">
-            ${'🌸🍊🌿⭐💎'.split('')[i%5]} ${p}
-          </div>
-          <div style="display:flex;gap:16px;font-size:12px;">
-            ${isSpecial?
-              `<span style="color:var(--t3);font-size:11px;">（不計入餐費池）</span>`:
-              `<span style="color:var(--t3);">期初 <span style="font-family:var(--mono);color:var(--text);">$${Math.round(openBal).toLocaleString()}</span></span>
-              <span style="color:var(--t3);">目前餘額 <span style="font-family:var(--mono);font-weight:700;color:${curBal>=0?'var(--green)':'var(--red)'};">${curBal>=0?'+':''}$${Math.round(curBal).toLocaleString()}</span></span>`
-            }
-          </div>
-        </div>
-
-        <!-- 明細表 -->
-        ${filtered.length?`
-        <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;min-width:460px;">
-          <thead><tr style="background:var(--s2);">
-            <th style="font-size:10px;color:var(--t3);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap;">編號</th>
-            <th style="font-size:10px;color:var(--t3);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);">日期</th>
-            <th style="font-size:10px;color:var(--t3);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);">類型</th>
-            <th style="font-size:10px;color:var(--t3);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);">說明</th>
-            <th style="font-size:10px;color:var(--t3);text-align:right;padding:6px 8px;border-bottom:1px solid var(--border);">金額</th>
-            ${isSpecial?'':
-              `<th style="font-size:10px;color:var(--t3);text-align:right;padding:6px 8px;border-bottom:1px solid var(--border);">當下餘額</th>`
-            }
-          </tr></thead>
-          <tbody>
-            ${filtered.map((r,ri)=>`<tr style="${r.fromPetty?'background:rgba(232,132,90,0.06);':''}${ri%2===1?'background:rgba(255,255,255,0.02);':''}">
-              <td style="font-size:10px;padding:7px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);color:${r.fromPetty?'var(--orange)':'var(--t3)'};">
-                ${r.id||'—'}${r.fromPetty?' 🔶':''}
-              </td>
-              <td style="font-size:11px;padding:7px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);color:var(--t3);white-space:nowrap;">${r.date}</td>
-              <td style="font-size:12px;padding:7px 8px;border-bottom:1px solid var(--border);">${r.label}</td>
-              <td style="font-size:12px;padding:7px 8px;border-bottom:1px solid var(--border);color:var(--t2);">${r.desc}</td>
-              <td style="font-size:13px;padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);color:${r.change>=0?'var(--green)':'var(--red)'};">
-                ${r.change>=0?'+':''}$${Math.abs(r.change).toLocaleString()}
-              </td>
-              ${isSpecial?'':
-                `<td style="font-size:13px;padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);font-weight:600;color:${r.bal>=0?'var(--text)':'var(--red)'};">
-                  $${Math.round(r.bal).toLocaleString()}
-                </td>`
-              }
-            </tr>`).join('')}
-          </tbody>
-        </table>
-        </div>`
-        :`<div style="color:var(--t3);font-size:12px;padding:8px 0;">此區間無記錄</div>`}
-      </div>`;
-    }).join('');
-}
-
-function openMealModal(){
-  const today=new Date().toISOString().slice(0,10);
-  document.getElementById('m-date').value=today;
-  document.getElementById('m-desc').value='';
-  document.getElementById('m-charge-amt').value='';
-  document.getElementById('m-payer-total').value='';
-  document.getElementById('m-repay-amt').value='';
-  document.getElementById('m-debtor-rows').innerHTML='';
-
-  const allPersons=[...DB.settings.persons,'申瑋','零用金'];
-  ['m-charge-who','m-payer','m-repay-who'].forEach(id=>{
-    const el=document.getElementById(id);
-    const list=id==='m-repay-who'?DB.settings.persons:allPersons;
-    el.innerHTML=list.map(p=>`<option>${p}</option>`).join('');
-  });
-
-  // 帳戶選單
-  const banks=DB.settings.banks;
-  document.getElementById('m-charge-bank').innerHTML=banks.map(b=>`<option>${b}</option>`).join('');
-  document.getElementById('m-charge-cc').innerHTML=DB.settings.creditCards.map(c=>`<option>${c}</option>`).join('');
-  document.getElementById('m-repay-bank').innerHTML=banks.map(b=>`<option>${b}</option>`).join('');
-
-  onMealChargeMethodChange();
-  // 填入統計類別
-  const statCat=document.getElementById('m-stat-cat');
-  if(statCat){
-    const expCats=DB.settings.categories.filter(c=>
-      !['收入','代墊回款','內部轉帳','信用卡費','餐費扣款','零用金支出'].includes(c));
-    statCat.innerHTML=expCats.map(c=>`<option>${c}</option>`).join('');
-  }
-  const statGroup=document.getElementById('m-stat-group');
-  if(statGroup) statGroup.style.display='none';
-  const countStat=document.getElementById('m-count-stat');
-  if(countStat) countStat.checked=false;
-
-  addDebtorRow();
-  onMealTypeChange();
-  document.getElementById('modal-meal').classList.add('open');
-}
-
-function onMealChargeMethodChange(){
-  const m=document.getElementById('m-charge-method').value;
-  document.getElementById('m-charge-bank-group').style.display=m==='轉帳'?'block':'none';
-  document.getElementById('m-charge-cc-group').style.display=m==='刷卡'?'block':'none';
-}
-
-function onMealPayerChange(){
-  // 欠款人選「申瑋」時顯示統計選項
-  checkMealStatVisibility();
-}
-
-function checkMealStatVisibility(){
-  // 檢查欠款人是否包含申瑋
-  const debtorRows=[...document.getElementById('m-debtor-rows').children];
-  const hasMe=debtorRows.some(row=>row.querySelector('select')?.value==='申瑋');
-  const statGroup=document.getElementById('m-stat-group');
-  if(statGroup) statGroup.style.display=hasMe?'block':'none';
-}
-
-function onMealTypeChange(){
-  const t=document.getElementById('m-type').value;
-  document.getElementById('m-charge-area').style.display=t==='charge'?'block':'none';
-  document.getElementById('m-split-area').style.display=t==='split'?'block':'none';
-  document.getElementById('m-repay-area').style.display=t==='repay'?'block':'none';
-}
-
-function addDebtorRow(){
-  const allPersons=[...DB.settings.persons,'申瑋'];
-  const div=document.createElement('div');
-  div.style='display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:center;';
-  div.innerHTML=`
-    <select onchange="calcPayerTotal();checkMealStatVisibility()"
-      style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-      ${allPersons.map(p=>`<option>${p}</option>`).join('')}
-    </select>
-    <input type="number" placeholder="金額" min="0" oninput="calcPayerTotal()"
-      style="background:var(--s2);border:1px solid var(--border);color:var(--red);padding:6px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
-    <button type="button" onclick="this.parentElement.remove();calcPayerTotal();checkMealStatVisibility()"
-      style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;">×</button>`;
-  document.getElementById('m-debtor-rows').appendChild(div);
-  checkMealStatVisibility();
-}
-
-function calcPayerTotal(){
-  const rows=document.getElementById('m-debtor-rows').querySelectorAll('div');
-  let t=0;rows.forEach(r=>{const inp=r.querySelector('input');t+=Number(inp?.value)||0;});
-  document.getElementById('m-payer-total').value=t||'';
-}
-
-// ── 自動編號產生器 ──
-function genId(prefix){
-  const today=new Date().toISOString().slice(2,10).replace(/-/g,'');
-  const arr=prefix==='M'?DB.mealTxs:DB.pettyTxs;
-  // 計算今天已有幾筆（包含剛剛push但還沒存的）
-  const todayCount=arr.filter(t=>t.id&&t.id.startsWith(prefix+today)).length;
-  const seq=String(todayCount+1).padStart(2,'0');
-  return `${prefix}${today}${seq}`;
-}
-
-function saveMealTx(){
-  const type=document.getElementById('m-type').value;
-  const date=document.getElementById('m-date').value;
-  const desc=document.getElementById('m-desc').value;
-  if(!date){alert('請填日期');return;}
-  const id=genId('M');
-  let tx={type,date,desc,id};
-
-  if(type==='charge'){
-    tx.chargeWho=document.getElementById('m-charge-who').value;
-    tx.amount=Number(document.getElementById('m-charge-amt').value)||0;
-    tx.chargeMethod=document.getElementById('m-charge-method').value;
-    if(tx.chargeMethod==='轉帳') tx.chargeBank=document.getElementById('m-charge-bank').value;
-    if(tx.chargeMethod==='刷卡') tx.chargeCC=document.getElementById('m-charge-cc').value;
-    if(!tx.amount){alert('請填金額');return;}
-  } else if(type==='split'){
-    tx.payer=document.getElementById('m-payer').value;
-    const rows=[...document.getElementById('m-debtor-rows').children];
-    tx.debtors=rows.map(r=>{
-      const sels=r.querySelectorAll('select');
-      const inp=r.querySelector('input');
-      return{who:sels[0]?.value,amt:Number(inp?.value)||0};
-    }).filter(d=>d.who&&d.amt>0);
-    if(!tx.debtors.length){alert('請填欠款人');return;}
-    tx.payerTotal=tx.debtors.reduce((a,d)=>a+d.amt,0);
-    tx.amount=tx.payerTotal;
-    // 零用金支出標記
-    if(tx.payer==='零用金') tx.fromPetty=true;
-    tx.debtors.forEach(d=>{ if(d.fromPetty===undefined) d.fromPetty=tx.fromPetty||false; });
-
-    // 欠款人含申瑋且勾選計入統計 → 記一筆支出（只有池子變動，帳戶不動）
-    const meDebtor=tx.debtors.find(d=>d.who==='申瑋');
-    if(meDebtor && document.getElementById('m-count-stat')?.checked){
-      const cat=document.getElementById('m-stat-cat')?.value||'飲食';
-      // 記一筆「不影響帳戶」的支出統計
-      DB.transactions.push({
-        cat,date:tx.date,item:tx.desc||'餐費',note:'',
-        amount:meDebtor.amt,payMethod:'__pool__',_poolOnly:true
-      });
-    }
-  } else if(type==='repay'){
-    tx.repayWho=document.getElementById('m-repay-who').value;
-    tx.amount=Number(document.getElementById('m-repay-amt').value)||0;
-    tx.repayMethod=document.getElementById('m-repay-method').value;
-    if(tx.repayMethod==='轉帳') tx.repayBank=document.getElementById('m-repay-bank').value;
-    if(!tx.amount){alert('請填金額');return;}
-  }
-
-  DB.mealTxs.push(tx);
-  save();closeModal('modal-meal');renderMeal();renderOverview();
-}
-
-function delMealTx(idx){
-  if(!confirm('確定刪除？'))return;
-  const tx=DB.mealTxs[idx];
-  // 如果是扣款，同步刪除主帳對應記錄
-  if(tx&&tx.type==='split'){
-    const ti=DB.transactions.findIndex(t=>t.cat==='餐費扣款'&&t.date===tx.date&&t._mealSync);
-    if(ti!==-1) DB.transactions.splice(ti,1);
-  }
-  // 如果是「存入同事餐費」產生的charge（僅餐費），同步刪除主帳支出
-  if(tx&&tx.type==='charge'&&tx.chargeMethod==='僅餐費'&&!tx.fromPetty){
-    const ti=DB.transactions.findIndex(t=>t.date===tx.date&&t.item===`${tx.chargeWho} 餐費儲值`);
-    if(ti!==-1) DB.transactions.splice(ti,1);
-  }
-  DB.mealTxs.splice(idx,1);
-  save();renderMeal();renderOverview();resetLedgerFilters();renderLedger();
-}
-
-let ledgerShowing=50;
-
-function loadMoreLedger(){ledgerShowing+=50;renderLedger();}
-
-function exportMealReport(){
-  // 保留舊的 CSV 匯出功能
-  const bals=computePersonBals();
-  const pool=computeMealPool();
-  const tl={charge:'儲值',split:'墊款',repay:'提領','petty-in':'零用金轉入'};
-  let csv='餐費報表\n\n日期,類型,說明,金額\n';
-  DB.mealTxs.forEach(tx=>{
-    let d='';
-    if(tx.type==='charge')d=`${tx.chargeWho}儲值`;
-    else if(tx.type==='split')d=`${tx.payer}墊付→`+(tx.debtors||[]).map(r=>`${r.who}$${r.amt}`).join('/');
-    else if(tx.type==='repay')d=`${tx.repayWho}提領(${tx.repayMethod})`;
-    csv+=`${tx.date},"${tl[tx.type]||tx.type}","${d}${tx.desc?' — '+tx.desc:''}",${tx.amount||tx.payerTotal||0}\n`;
-  });
-  csv+=`\n餐費池餘額,$${Math.round(pool).toLocaleString()}\n\n人員,餘額\n`;
-  DB.settings.persons.forEach(p=>csv+=`${p},$${Math.round(bals[p]||0).toLocaleString()}\n`);
-  downloadFile('餐費報表.csv',csv,'text/csv');
-}
-
-// ════════════════════════════════════════════════════
-//  PETTY CASH
-// ════════════════════════════════════════════════════
-function renderPetty(){
-  let bal=DB.settings.initPetty;
-  let totalOut=0;
-  DB.pettyTxs.forEach(tx=>{
-    const a=Number(tx.amount)||0;
-    if(['in','fine','pool-only'].includes(tx.type))bal+=a; else{bal-=a;totalOut+=a;}
-  });
-  // 零用金轉餐費也算支出
-  DB.mealTxs.filter(t=>t.type==='petty-in').forEach(tx=>{bal-=Number(tx.amount)||0;totalOut+=Number(tx.amount)||0;});
-
-  document.getElementById('petty-stats').innerHTML=[
-    {l:'目前餘額',v:'$'+Math.round(bal).toLocaleString(),c:'orange'},
-    {l:'本輪總支出',v:'$'+Math.round(totalOut).toLocaleString(),c:'red'},
-  ].map(s=>`<div class="stat ${s.c}"><div class="stat-label">${s.l}</div><div class="stat-val ${s.c}">${s.v}</div></div>`).join('');
-
-  const now=new Date().toISOString().slice(0,10);
-  const yrMo=now.slice(0,7);
-  if(!document.getElementById('pr-start').value) document.getElementById('pr-start').value=yrMo+'-01';
-  if(!document.getElementById('pr-end').value) document.getElementById('pr-end').value=now;
-
-  const tl={in:'撥款','out-person':'員工請款','out-self':'自行支出',fine:'罰款繳入','pool-only':'初始設定（僅計入池）'};
-  const list=document.getElementById('petty-list');
-  if(!DB.pettyTxs.length){list.innerHTML='<div class="empty">尚無零用金記錄</div>';return;}
-  list.innerHTML=[...DB.pettyTxs].reverse().map((tx,i)=>{
-    const ri=DB.pettyTxs.length-1-i;
-    const isOut=!['in','fine','pool-only'].includes(tx.type);
-    const d=new Date(tx.date);
-    const mo=isNaN(d)?'':d.getMonth()+1;
-    const day=isNaN(d)?'':d.getDate();
-    return`<div class="tx-row" style="padding:10px 14px;">
-      <div style="display:grid;grid-template-columns:auto auto auto 1fr auto auto auto;gap:10px;align-items:center;">
-        <span style="font-size:10px;font-family:var(--mono);color:var(--orange);white-space:nowrap;">${tx.id||'—'}</span>
-        <span class="tx-date" style="white-space:nowrap;">${tx.date||''}</span>
-        <span style="font-size:11px;font-weight:600;color:var(--t2);white-space:nowrap;">${tl[tx.type]||tx.type}</span>
-        <div style="min-width:0;">
-          <div style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            ${tx.desc||''}
-            ${tx.payer?`<span style="color:var(--accent);font-size:11px;margin-left:6px;">（${tx.payer}）</span>`:''}
-            ${tx.inBank?`<span style="color:var(--green);font-size:11px;margin-left:6px;">→ ${tx.inBank}</span>`:''}
-            ${tx.outPay&&tx.type==='out-self'?`<span style="color:var(--t3);font-size:11px;margin-left:6px;">← ${tx.outPay}</span>`:''}
-          </div>
-          ${tx.note?`<div style="font-size:11px;color:var(--t3);margin-top:2px;">${tx.note}</div>`:''}
-        </div>
-        <span class="tx-amt ${isOut?'out':'in'}" style="white-space:nowrap;">${isOut?'-':'+'}$${Number(tx.amount).toLocaleString()}</span>
-        <button class="tx-del" onclick="delPettyTx(${ri})">×</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function openPettyModal(){
-  const today=new Date().toISOString().slice(0,10);
-  document.getElementById('p-date').value=today;
-  document.getElementById('p-desc').value='';
-  document.getElementById('p-amt').value='';
-  document.getElementById('p-note').value='';
-  document.getElementById('p-type').value='in';
-
-  const payerSel=document.getElementById('p-payer');
-  payerSel.innerHTML=`<option value="">不適用</option>`+
-    [...DB.settings.persons,'申瑋'].map(p=>`<option value="${p}">${p}</option>`).join('');
-
-  const allBanks=[...DB.settings.banks,'現金'];
-  document.getElementById('p-in-bank').innerHTML=
-    allBanks.map(b=>`<option>${b}</option>`).join('');
-  document.getElementById('p-out-pay').innerHTML=
-    ['現金',...DB.settings.banks,...DB.settings.creditCards].map(b=>`<option>${b}</option>`).join('');
-
-  onPettyTypeChange();
-  document.getElementById('modal-petty').classList.add('open');
-}
-
-function onPettyTypeChange(){
-  const type=document.getElementById('p-type').value;
-  const isIn=['in','fine'].includes(type);
-  const isSelf=type==='out-self'; // 只有我自行支出才需要選付款方式
-  document.getElementById('p-in-bank-group').style.display=isIn?'block':'none';
-  document.getElementById('p-out-pay-group').style.display=isSelf?'block':'none';
-}
-
-function savePettyTx(){
-  const type=document.getElementById('p-type').value;
-  const tx={
-    id:genId('P'),
-    date:document.getElementById('p-date').value,
-    type,
-    desc:document.getElementById('p-desc').value,
-    amount:document.getElementById('p-amt').value||0,
-    payer:document.getElementById('p-payer').value,
-    repay:document.getElementById('p-repay').value,
-    note:document.getElementById('p-note').value,
-  };
-  if(['in','fine'].includes(type)){
-    tx.inBank=document.getElementById('p-in-bank').value;
-  }
-  if(['out-person','out-self'].includes(type)){
-    tx.outPay=document.getElementById('p-out-pay').value;
-  }
-  if(!tx.date||!tx.amount){alert('請填日期和金額');return;}
-  DB.pettyTxs.push(tx);
-
-  // 回款方式選「加入餐費」→ 同步到餐費明細
-  if(tx.type==='out-person' && tx.repay==='加餐費' && tx.payer){
-    DB.mealTxs.push({
-      id:genId('M'),
-      type:'charge',
-      date:tx.date,
-      desc:`零用金轉入，代墊${tx.desc||''}`,
-      chargeWho:tx.payer,
-      amount:Number(tx.amount),
-      chargeMethod:'僅餐費',
-      fromPetty:true
+  if(_charts.cat) _charts.cat.destroy();
+  if(catLabels.length){
+    _charts.cat = new Chart(document.getElementById('chart-cat'),{
+      type:'doughnut',
+      data:{labels:catLabels,datasets:[{data:catVals,backgroundColor:colors,borderWidth:0}]},
+      options:{responsive:true,plugins:{legend:{labels:{color:'#a0a0c0'}}}}
     });
   }
-
-  save();closeModal('modal-petty');renderPetty();renderOverview();
-  resetLedgerFilters();renderLedger();renderMeal();
 }
 
-function delPettyTx(idx){
-  if(!confirm('確定刪除？'))return;
-  const tx=DB.pettyTxs[idx];
-  // 如果是員工請款+加入餐費，同步刪除餐費明細
-  if(tx&&tx.type==='out-person'&&tx.repay==='加餐費'&&tx.payer){
-    const desc=`零用金轉入，代墊${tx.desc||''}`;
-    const mi=DB.mealTxs.findIndex(m=>m.type==='charge'&&m.chargeWho===tx.payer&&m.chargeMethod==='僅餐費'&&m.desc===desc&&m.date===tx.date);
-    if(mi!==-1) DB.mealTxs.splice(mi,1);
-  }
-  DB.pettyTxs.splice(idx,1);
-  save();renderPetty();renderOverview();renderMeal();resetLedgerFilters();renderLedger();
-}
-
-function exportPettyReport(){
-  const start=document.getElementById('pr-start').value;
-  const end=document.getElementById('pr-end').value;
-
-  // 計算期初餘額（start之前的所有變動）
-  let openBal=DB.settings.initPetty;
-  DB.pettyTxs.forEach(tx=>{
-    if(start&&tx.date>=start) return;
-    const a=Number(tx.amount)||0;
-    if(['in','fine','pool-only'].includes(tx.type)) openBal+=a;
-    else openBal-=a;
+// ════════════════════════════════════════
+// SETTINGS RENDER
+// ════════════════════════════════════════
+function renderSettings(){
+  const s = DB.settings;
+  ['tw-banks','au-banks','ccs','cats'].forEach(key=>{
+    const arr = key==='tw-banks'?s.twBanks:key==='au-banks'?s.auBanks:key==='ccs'?s.creditCards:s.categories;
+    document.getElementById('set-'+key).innerHTML = arr.map((v,i)=>`
+      <div class="setting-row">
+        <div class="setting-tag">${v}</div>
+        <button class="setting-del" onclick="removeItem('${key}',${i})">×</button>
+      </div>`).join('');
   });
 
-  const filtered=DB.pettyTxs.filter(tx=>(!start||tx.date>=start)&&(!end||tx.date<=end));
-  let bal=openBal;
-  let seq=0;
+  // Init balances
+  document.getElementById('set-tw-init').innerHTML =
+    `<div class="setting-row"><span style="flex:1;font-size:13px;">現金</span>
+    <input type="number" id="init-tw-cash" value="${s.initTWCash||0}" style="width:130px;"></div>` +
+    s.twBanks.map(b=>`<div class="setting-row"><span style="flex:1;font-size:13px;">${b}</span>
+    <input type="number" id="init-tw-${b}" value="${s.initTWBanks[b]||0}" style="width:130px;"></div>`).join('');
 
-  const rows=[];
-  rows.push(['邦統貿易 - 零用金明細表','','','','','','','','','']);
-  rows.push(['編號','月','日','摘要','收入','支出','餘額','墊款人','回款方式','備註']);
-  rows.push(['','','','上期盈餘',Math.round(openBal),'',Math.round(openBal),'','','']);
+  document.getElementById('set-au-init').innerHTML =
+    `<div class="setting-row"><span style="flex:1;font-size:13px;">現金（AUD）</span>
+    <input type="number" id="init-au-cash" value="${s.initAUCash||0}" style="width:130px;"></div>` +
+    s.auBanks.map(b=>`<div class="setting-row"><span style="flex:1;font-size:13px;">${b}</span>
+    <input type="number" id="init-au-${b}" value="${s.initAUBanks[b]||0}" style="width:130px;"></div>`).join('');
 
-  filtered.forEach(tx=>{
-    const a=Number(tx.amount)||0;
-    const isIn=['in','fine','pool-only'].includes(tx.type);
-    if(isIn) bal+=a; else bal-=a;
+  document.getElementById('set-cc-init').innerHTML =
+    s.creditCards.map(c=>`<div class="setting-row"><span style="flex:1;font-size:13px;">${c}</span>
+    <input type="number" id="init-cc-${c}" value="${s.initCC[c]||0}" style="width:130px;"></div>`).join('');
 
-    const d=new Date(tx.date+'T00:00:00');
-    const mo=isNaN(d.getTime())?'':d.getMonth()+1;
-    const day=isNaN(d.getTime())?'':d.getDate();
-    const tLabel={in:'公司撥款','pool-only':'期初設定',fine:'罰款繳入','out-person':'員工請款','out-self':'自行支出'};
-
-    if(isIn){
-      rows.push(['',mo,day,`${tLabel[tx.type]||tx.type}${tx.desc?' - '+tx.desc:''}`,a,'',Math.round(bal),tx.payer||'',tx.repay||'',tx.note||'']);
-    } else {
-      seq++;
-      rows.push([seq,mo,day,tx.desc||'','',a,Math.round(bal),tx.payer||'',tx.repay||'',tx.note||'']);
-    }
-  });
-
-  const tIn=filtered.filter(t=>['in','fine','pool-only'].includes(t.type)).reduce((a,t)=>a+Number(t.amount),0);
-  const tOut=filtered.filter(t=>!['in','fine','pool-only'].includes(t.type)).reduce((a,t)=>a+Number(t.amount),0);
-  rows.push(['合計','','','',Math.round(tIn),Math.round(tOut),Math.round(bal),'','','']);
-
-  // 用逗號分隔，Excel 可以正確分欄
-  const csv=rows.map(r=>r.map(c=>{
-    const s=String(c);
-    // 如果含逗號、引號或換行，用雙引號包起來
-    return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s.replace(/"/g,'""')}"`  :s;
-  }).join(',')).join('\r\n');
-  downloadFile(`零用金報表_${start}_${end}.csv`,'\ufeff'+csv,'text/csv');
+  // Year for charts
+  const years = new Set(DB.transactions.map(t=>t.date?.slice(0,4)).filter(Boolean));
+  years.add(String(new Date().getFullYear()));
+  document.getElementById('cf-year').innerHTML = [...years].sort().reverse().map(y=>`<option>${y}</option>`).join('');
 }
 
-// ════════════════════════════════════════════════════
-//  ADVANCE TRACKING
-// ════════════════════════════════════════════════════
-let currentAdvId=null;
+function removeItem(key, idx){
+  const s = DB.settings;
+  const arr = key==='tw-banks'?s.twBanks:key==='au-banks'?s.auBanks:key==='ccs'?s.creditCards:s.categories;
+  arr.splice(idx,1);
+  save(); renderAll();
+}
+function addTWBank(){ const v=document.getElementById('new-tw-bank').value.trim(); if(!v) return; DB.settings.twBanks.push(v); document.getElementById('new-tw-bank').value=''; save(); renderAll(); }
+function addAUBank(){ const v=document.getElementById('new-au-bank').value.trim(); if(!v) return; DB.settings.auBanks.push(v); document.getElementById('new-au-bank').value=''; save(); renderAll(); }
+function addCC(){ const v=document.getElementById('new-cc').value.trim(); if(!v) return; DB.settings.creditCards.push(v); DB.settings.initCC[v]=0; document.getElementById('new-cc').value=''; save(); renderAll(); }
+function addCat(){ const v=document.getElementById('new-cat').value.trim(); if(!v) return; DB.settings.categories.push(v); document.getElementById('new-cat').value=''; save(); renderAll(); }
 
-function delAdv(idx){
-  if(!confirm('確定刪除這筆代墊記錄？')) return;
-  const adv=DB.advances[idx];
-  // 同步刪除主帳代墊款記錄
-  if(adv){
-    const ti=DB.transactions.findIndex(t=>t.cat==='代墊款'&&t.date===adv.date&&
-      t.item===`代墊-${adv.who}`);
-    if(ti!==-1) DB.transactions.splice(ti,1);
-  }
-  DB.advances.splice(idx,1);
-  save(); renderAdvance(); renderOverview(); resetLedgerFilters(); renderLedger();
+function saveInitBalances(){
+  const s = DB.settings;
+  s.initTWCash = Number(document.getElementById('init-tw-cash').value)||0;
+  s.initAUCash = Number(document.getElementById('init-au-cash').value)||0;
+  s.twBanks.forEach(b=>{ const el=document.getElementById('init-tw-'+b); if(el) s.initTWBanks[b]=Number(el.value)||0; });
+  s.auBanks.forEach(b=>{ const el=document.getElementById('init-au-'+b); if(el) s.initAUBanks[b]=Number(el.value)||0; });
+  s.creditCards.forEach(c=>{ const el=document.getElementById('init-cc-'+c); if(el) s.initCC[c]=Number(el.value)||0; });
+  save(); renderOverview(); alert('✅ 期初餘額已更新');
 }
 
 function clearAllData(){
-  if(!confirm('⚠️ 確定要清除所有資料重新開始？\n這個動作無法復原！')) return;
-  if(!confirm('再次確認：所有記帳、餐費、零用金、代墊記錄都會清除。確定嗎？')) return;
+  if(!confirm('確定要清除所有資料？此操作無法還原！')) return;
+  if(!confirm('再次確認：清除所有記帳資料？')) return;
   DB = JSON.parse(JSON.stringify(DEFAULT));
-  save();
-  renderOverview();
-  alert('已清除！可以重新開始記帳了。');
+  save(); renderAll();
 }
 
-function renderAdvance(){
-  const pending=DB.advances.filter(a=>!a.settled);
-  const settled=DB.advances.filter(a=>a.settled);
-  const totalPending=pending.reduce((a,b)=>a+Number(b.amount),0);
+// ════════════════════════════════════════
+// TX MODAL
+// ════════════════════════════════════════
+function openTxModal(){
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('tx-date').value = today;
+  document.getElementById('tx-curr').value = 'TWD';
+  document.getElementById('tx-amt').value = '';
+  document.getElementById('tx-mine').value = '';
+  document.getElementById('tx-item').value = '';
+  document.getElementById('tx-note').value = '';
+  document.getElementById('tx-stat').checked = true;
+  document.getElementById('tx-adv-check').checked = false;
+  document.getElementById('tx-adv-rows').style.display = 'none';
+  document.getElementById('tx-adv-rows').innerHTML = '';
+  document.getElementById('tx-adv-add-btn').style.display = 'none';
+  document.getElementById('tx-alloc-bar').style.display = 'none';
 
-  document.getElementById('adv-stats').innerHTML=`
-    <div class="stat yellow"><div class="stat-label">待回款總計</div><div class="stat-val yellow">$${Math.round(totalPending).toLocaleString()}</div></div>
-    <div class="stat green"><div class="stat-label">已回款筆數</div><div class="stat-val green">${settled.length} 筆</div></div>`;
-
-  const renderList=(items,container)=>{
-    if(!items.length){document.getElementById(container).innerHTML='<div class="empty">無</div>';return;}
-    document.getElementById(container).innerHTML=items.map((a,i)=>{
-      const realIdx=DB.advances.indexOf(a);
-      return`<div class="adv-item ${a.settled?'settled':''}" style="margin-bottom:6px;">
-        <span class="tx-date">${a.date||''}</span>
-        <div>
-          <div style="font-size:13px;">${a.who||'—'} <span class="text-muted">— ${a.desc||''}</span></div>
-          ${a.settled?`<div class="text-muted">${a.settleDate} 回款（${a.settleMethod}）</div>`:''}
-        </div>
-        <span class="tx-amt ${a.settled?'':'out'}">$${Number(a.amount).toLocaleString()}</span>
-        <span class="status-badge ${a.settled?'done':'pending'}">${a.settled?'已回款':'待回款'}</span>
-        ${!a.settled?`<button class="btn btn-ghost" style="font-size:12px;padding:4px 10px;" onclick="openAdvRepay(${a.id})">登記回款</button>`:'<div></div>'}
-        <button class="tx-del" onclick="delAdv(${realIdx})" title="刪除">×</button>
-      </div>`;
-    }).join('');
-  };
-  renderList(pending,'adv-pending');
-  renderList(settled,'adv-settled');
+  onTxCurrChange();
+  onTxStatChange();
+  document.getElementById('modal-tx').classList.add('open');
 }
 
-function openAdvRepay(id){
-  currentAdvId=id;
-  const adv=DB.advances.find(a=>a.id===id);
-  document.getElementById('adv-repay-info').innerHTML=
-    `對象：<strong>${adv.who}</strong>　金額：<strong>$${Number(adv.amount).toLocaleString()}</strong>　說明：${adv.desc}`;
-  document.getElementById('ar-date').value=new Date().toISOString().slice(0,10);
-  document.getElementById('ar-amt').value=adv.amount;
-  document.getElementById('ar-method').value='現金';
-  const bankSel=document.getElementById('ar-bank');
-  bankSel.innerHTML=DB.settings.banks.map(b=>`<option>${b}</option>`).join('');
-  onAdvMethodChange();
-  document.getElementById('modal-adv-repay').classList.add('open');
+function onTxCurrChange(){
+  const curr = document.getElementById('tx-curr').value;
+  const s = DB.settings;
+  const banks = curr==='AUD' ? s.auBanks : s.twBanks;
+  const cash = curr==='AUD' ? '現金（AUD）' : '現金';
+  const allPay = [...(curr==='TWD'?s.creditCards:[]), ...banks, cash];
+
+  document.getElementById('tx-pay').innerHTML =
+    allPay.map(p=>`<option value="${p}">${p}</option>`).join('') +
+    `<optgroup label="───────────">
+      <option value="__income__">💰 收入</option>
+      <option value="__internal__">⇄ 內部轉帳</option>
+      ${curr==='TWD'?'<option value="__ccfee__">💳 繳信用卡費</option>':''}
+    </optgroup>`;
+
+  // Income acc
+  document.getElementById('tx-income-acc').innerHTML = [...banks, cash].map(p=>`<option>${p}</option>`).join('');
+
+  // CC
+  document.getElementById('tx-cc-card').innerHTML = s.creditCards.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('tx-cc-from').innerHTML = [...s.twBanks,'現金'].map(p=>`<option>${p}</option>`).join('');
+
+  // Internal
+  const allAccts = [...s.twBanks,...s.auBanks,'現金','現金（AUD）'];
+  document.getElementById('tx-int-from').innerHTML = allAccts.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('tx-int-to').innerHTML = allAccts.map(p=>`<option>${p}</option>`).join('');
+
+  // Cat
+  document.getElementById('tx-cat').innerHTML = s.categories.map(c=>`<option>${c}</option>`).join('');
+
+  onTxPayChange();
 }
 
-function onAdvMethodChange(){
-  const m=document.getElementById('ar-method').value;
-  document.getElementById('ar-bank-group').style.display=m==='轉帳'?'block':'none';
+function onTxPayChange(){
+  const pay = document.getElementById('tx-pay').value;
+  const isIncome = pay==='__income__';
+  const isInternal = pay==='__internal__';
+  const isCCFee = pay==='__ccfee__';
+  const isNormal = !isIncome && !isInternal && !isCCFee;
+
+  document.getElementById('tx-income-area').style.display = isIncome?'block':'none';
+  document.getElementById('tx-int-area').style.display = isInternal?'block':'none';
+  document.getElementById('tx-cc-area').style.display = isCCFee?'block':'none';
+  document.getElementById('tx-amt-grp').style.display = isNormal?'block':'none';
+  document.getElementById('tx-mine-grp').style.display = isNormal?'block':'none';
+  document.getElementById('tx-stat-grp').style.display = isNormal?'block':'none';
+  document.getElementById('tx-cat-grp').style.display = (isNormal&&document.getElementById('tx-stat').checked)?'block':'none';
+  document.getElementById('tx-item-grp').style.display = isNormal?'block':'none';
+  document.getElementById('tx-adv-addon').style.display = isNormal?'block':'none';
+  if(!isNormal) document.getElementById('tx-alloc-bar').style.display='none';
 }
 
-function saveAdvRepay(){
-  const adv=DB.advances.find(a=>a.id===currentAdvId);
-  if(!adv)return;
-  const method=document.getElementById('ar-method').value;
-  const amt=Number(document.getElementById('ar-amt').value)||adv.amount;
-  const date=document.getElementById('ar-date').value;
-  const bank=document.getElementById('ar-bank').value;
+function onTxStatChange(){
+  const checked = document.getElementById('tx-stat').checked;
+  document.getElementById('tx-cat-grp').style.display = checked?'block':'none';
+}
 
-  adv.settled=true;
-  adv.settleDate=date;
-  adv.settleMethod=method;
-  adv.settleAmt=amt;
+function onTxAmtChange(){
+  const total = Number(document.getElementById('tx-amt').value)||0;
+  const mine = document.getElementById('tx-mine');
+  if(mine.value==='' || Number(mine.value)>total) mine.value = total||'';
+  updateAlloc();
+}
 
-  if(method==='扣餐費'){
-    // 從同事餐費池扣，不影響我銀行，不算收入
-    const person=DB.settings.persons.find(p=>adv.who?.includes(p))||adv.who;
-    DB.mealTxs.push({type:'repay',date,desc:`代墊回款—${adv.desc}`,
-      repayWho:person,amount:amt,repayMethod:'現金'});
-  } else {
-    // 現金或轉帳還我 → 只影響我的帳戶，不算收入不算支出
-    // 用一個特殊的內部記錄
-    DB.transactions.push({
-      cat:'代墊回款',date,item:`代墊回款—${adv.who}`,note:adv.desc,
-      amount:amt,payMethod:method==='現金'?'現金':bank,
-      _advRepay:true
+function updateAlloc(){
+  const total = Number(document.getElementById('tx-amt').value)||0;
+  if(!total){ document.getElementById('tx-alloc-bar').style.display='none'; return; }
+  const mine = document.getElementById('tx-mine').value===''?total:Number(document.getElementById('tx-mine').value)||0;
+  const curr = document.getElementById('tx-curr').value;
+  let advTotal = 0;
+  if(document.getElementById('tx-adv-check').checked){
+    [...document.getElementById('tx-adv-rows').children].forEach(row=>{
+      advTotal += Number(row.querySelector('input[type=number]')?.value)||0;
     });
   }
-  save();closeModal('modal-adv-repay');renderAdvance();renderOverview();
+  const allocated = mine + advTotal;
+  const bar = document.getElementById('tx-alloc-bar');
+  bar.style.display = 'flex';
+  const el = document.getElementById('tx-alloc-val');
+  const sym = curr==='AUD'?'A$':'$';
+  el.textContent = `${sym}${allocated.toLocaleString()} / ${sym}${total.toLocaleString()}`;
+  el.style.color = allocated===total?'var(--green)':allocated>total?'var(--red)':'var(--yellow)';
 }
 
-// ════════════════════════════════════════════════════
-//  SETTINGS
-// ════════════════════════════════════════════════════
-function renderSettings(){
-  const s=DB.settings;
-  const tagHtml=(list,removeFn)=>list.map((v,i)=>`<div class="sub-tag" style="padding:4px 10px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);font-size:12px;display:inline-flex;align-items:center;gap:6px;margin:3px;">${v}<button onclick="${removeFn}(${i})" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;">×</button></div>`).join('');
-
-  document.getElementById('settings-content').innerHTML=`
-    <div class="mb12"><h3 style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">💳 信用卡</h3>
-      <div style="margin-bottom:8px;">${tagHtml(s.creditCards,'removeCC')}</div>
-      <div class="row"><input type="text" id="new-cc" placeholder="新增信用卡" style="width:200px;"><button class="btn btn-primary" onclick="addCC()">新增</button></div></div>
-    <div class="div"></div>
-    <div class="mb12"><h3 style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">🏦 銀行帳戶</h3>
-      <div style="margin-bottom:8px;">${tagHtml(s.banks,'removeBank')}</div>
-      <div class="row"><input type="text" id="new-bank" placeholder="新增帳戶" style="width:200px;"><button class="btn btn-primary" onclick="addBank()">新增</button></div></div>
-    <div class="div"></div>
-    <div class="mb12"><h3 style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">🏷️ 支出類別</h3>
-      <div style="margin-bottom:8px;">${tagHtml(s.categories,'removeCat')}</div>
-      <div class="row"><input type="text" id="new-cat" placeholder="新增類別" style="width:200px;"><button class="btn btn-primary" onclick="addCat()">新增</button></div></div>
-    <div class="div"></div>
-    <div class="mb12"><h3 style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">👥 餐費人員（同事）</h3>
-      <div style="margin-bottom:8px;">${tagHtml(s.persons,'removePerson')}</div>
-      <div class="row"><input type="text" id="new-person" placeholder="新增同事" style="width:200px;"><button class="btn btn-primary" onclick="addPerson()">新增</button></div></div>
-    <div class="div"></div>
-    <div><h3 style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">💰 初始餘額</h3>
-      ${s.banks.map((b,i)=>`<div class="row mb8"><span style="width:150px;font-size:13px;">${b}</span>
-        <input type="number" id="ib-bank-${i}" value="${s.initBanks[b]||0}" style="width:120px;"></div>`).join('')}
-      <div class="row mb8"><span style="width:150px;font-size:13px;">現金</span><input type="number" id="ib-cash" value="${s.initCash}" style="width:120px;"></div>
-      <div class="row mb8"><span style="width:150px;font-size:13px;">零用金初始</span><input type="number" id="ib-petty" value="${s.initPetty}" style="width:120px;"></div>
-      <div class="div"></div>
-      <div style="font-size:12px;color:var(--t3);margin-bottom:8px;">信用卡初始未繳</div>
-      ${s.creditCards.map((c,i)=>`<div class="row mb8"><span style="width:150px;font-size:13px;">${c}</span>
-        <input type="number" id="ib-cc-${i}" value="${s.initCC[c]||0}" style="width:120px;"></div>`).join('')}
-      <div class="mt12">
-        <button class="btn btn-primary" onclick="confirmInitBalances()" style="width:100%;">✅ 確認更新初始餘額</button>
-        <div class="text-muted mt8">填完後按確認才會儲存並更新總覽</div>
-      </div>
-    </div>
-    <div class="div"></div>
-    <div>
-      <h3 style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">📊 儲存空間</h3>
-      ${(()=>{
-        const size=Math.round(JSON.stringify(DB).length/1024);
-        const pct=Math.min(100,Math.round(size/1000*100));
-        const color=size>500?'var(--red)':size>200?'var(--yellow)':'var(--green)';
-        return`<div style="margin-bottom:8px;font-size:13px;">目前資料量：<span style="font-family:var(--mono);color:${color};font-weight:600;">${size} KB</span> / 約1000KB上限</div>
-        <div style="background:var(--s2);border-radius:4px;height:8px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width .3s;"></div>
-        </div>
-        <div class="text-muted mt8">超過500KB建議進行年度封存</div>`;
-      })()}
-    </div>
-    <div class="div"></div>
-      <button class="btn btn-danger" onclick="clearAllData()">清除所有資料重新開始</button>
-      <div class="text-muted mt8">清除後無法復原，請先匯出備份</div>
-    </div>`;
+function onTxAdvCheck(){
+  const checked = document.getElementById('tx-adv-check').checked;
+  document.getElementById('tx-adv-rows').style.display = checked?'block':'none';
+  document.getElementById('tx-adv-add-btn').style.display = checked?'block':'none';
+  if(checked && document.getElementById('tx-adv-rows').children.length===0) addAdvRow();
+  updateAlloc();
 }
 
-function confirmInitBalances(){
-  const s=DB.settings;
-  s.banks.forEach((b,i)=>{
-    const el=document.getElementById('ib-bank-'+i);
-    if(el) s.initBanks[b]=Number(el.value)||0;
-  });
-  const cash=document.getElementById('ib-cash');
-  if(cash) s.initCash=Number(cash.value)||0;
-  const petty=document.getElementById('ib-petty');
-  if(petty) s.initPetty=Number(petty.value)||0;
-  s.creditCards.forEach((c,i)=>{
-    const el=document.getElementById('ib-cc-'+i);
-    if(el) s.initCC[c]=Number(el.value)||0;
-  });
-  save();
-  renderOverview();
-  alert('✅ 初始餘額已更新！');
+function addAdvRow(){
+  const div = document.createElement('div');
+  div.className = 'adv-row';
+  div.style = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px;align-items:center;';
+  div.innerHTML = `
+    <input type="text" placeholder="對象姓名" style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+    <input type="number" placeholder="金額" min="0" oninput="updateAlloc()" style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);padding:7px 9px;border-radius:var(--r-xs);font-family:var(--font);font-size:12px;">
+    <button type="button" onclick="this.closest('.adv-row').remove();updateAlloc()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;">×</button>`;
+  document.getElementById('tx-adv-rows').appendChild(div);
 }
 
-function addCC(){const v=document.getElementById('new-cc').value.trim();if(v){DB.settings.creditCards.push(v);DB.settings.initCC[v]=0;save();renderSettings();}}
-function removeCC(i){DB.settings.creditCards.splice(i,1);save();renderSettings();}
-function addBank(){const v=document.getElementById('new-bank').value.trim();if(v){DB.settings.banks.push(v);DB.settings.initBanks[v]=0;save();renderSettings();}}
-function removeBank(i){DB.settings.banks.splice(i,1);save();renderSettings();}
-function addCat(){const v=document.getElementById('new-cat').value.trim();if(v){DB.settings.categories.push(v);save();renderSettings();}}
-function removeCat(i){DB.settings.categories.splice(i,1);save();renderSettings();}
-function addPerson(){const v=document.getElementById('new-person').value.trim();if(v){DB.settings.persons.push(v);save();renderSettings();}}
-function removePerson(i){DB.settings.persons.splice(i,1);save();renderSettings();}
+function saveTx(){
+  const date = document.getElementById('tx-date').value;
+  const curr = document.getElementById('tx-curr').value;
+  const pay = document.getElementById('tx-pay').value;
+  const note = document.getElementById('tx-note').value;
+  if(!date){ alert('請填日期'); return; }
 
-// ════════════════════════════════════════════════════
-//  UTILS
-// ════════════════════════════════════════════════════
-function toggleSection(bodyId,cbId){
-  const body=document.getElementById(bodyId);
-  const cb=document.getElementById(cbId);
-  const open=cb.checked;
-  body.classList.toggle('open',open);
-}
-
-function toggleNavMenu(){
-  const menu=document.getElementById('nav-menu');
-  menu.style.display=menu.style.display==='none'?'block':'none';
-}
-
-document.addEventListener('click',e=>{
-  const btn=document.getElementById('nav-menu-btn');
-  const menu=document.getElementById('nav-menu');
-  if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
-    menu.style.display='none';
+  if(pay==='__internal__'){
+    const amt = Number(document.getElementById('tx-int-amt').value)||0;
+    if(!amt){ alert('請填金額'); return; }
+    DB.transactions.push({cat:'內部轉帳',date,currency:curr,note,amount:amt,intAmt:amt,
+      intFrom:document.getElementById('tx-int-from').value,
+      intTo:document.getElementById('tx-int-to').value});
+    save(); closeModal('modal-tx'); renderAll(); return;
   }
-});
+  if(pay==='__ccfee__'){
+    const amt = Number(document.getElementById('tx-cc-amt').value)||0;
+    if(!amt){ alert('請填金額'); return; }
+    DB.transactions.push({cat:'信用卡費',date,currency:'TWD',note,amount:amt,ccAmt:amt,
+      ccCard:document.getElementById('tx-cc-card').value,
+      ccFrom:document.getElementById('tx-cc-from').value});
+    save(); closeModal('modal-tx'); renderAll(); return;
+  }
+  if(pay==='__income__'){
+    const amt = Number(document.getElementById('tx-income-amt').value)||0;
+    if(!amt){ alert('請填金額'); return; }
+    DB.transactions.push({cat:'收入',date,currency:curr,note,amount:amt,
+      payMethod:document.getElementById('tx-income-acc').value});
+    save(); closeModal('modal-tx'); renderAll(); return;
+  }
 
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+  const total = Number(document.getElementById('tx-amt').value)||0;
+  const mineEl = document.getElementById('tx-mine');
+  const mine = mineEl.value===''?total:Number(mineEl.value);
+  const stat = document.getElementById('tx-stat').checked;
+  const cat = stat?document.getElementById('tx-cat').value:'不計統計';
+  const item = document.getElementById('tx-item').value;
+  if(!total){ alert('請填金額'); return; }
 
-function exportData(){
-  downloadFile('記帳備份_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(DB,null,2),'application/json');
-}
-function importData(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{try{DB=JSON.parse(ev.target.result);save();renderOverview();alert('匯入成功！');}catch{alert('格式錯誤');}};
-  reader.readAsText(file);
-}
-function downloadFile(name,content,type){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([content],{type}));
-  a.download=name;a.click();
+  // 代墊
+  let advRows = [];
+  if(document.getElementById('tx-adv-check').checked){
+    [...document.getElementById('tx-adv-rows').children].forEach(row=>{
+      const who = row.querySelector('input[type=text]')?.value;
+      const amt = Number(row.querySelector('input[type=number]')?.value)||0;
+      if(who&&amt) advRows.push({who,amt});
+    });
+  }
+
+  const allocated = mine + advRows.reduce((s,a)=>s+a.amt,0);
+  if(allocated!==total){
+    if(!confirm(`分配金額 ${allocated} 不等於總金額 ${total}，確定繼續？`)) return;
+  }
+
+  // 主帳
+  if(mine>0){
+    DB.transactions.push({cat,date,currency:curr,item,note,amount:mine,payMethod:pay});
+  }
+
+  // 代墊
+  advRows.forEach(a=>{
+    DB.transactions.push({cat:'代墊款',date,currency:curr,item:`代墊-${a.who}`,note,amount:a.amt,payMethod:pay});
+    DB.advances.push({id:Date.now()+Math.random(),date,who:a.who,amount:a.amt,currency:curr,desc:item||note,settled:false});
+  });
+
+  save(); closeModal('modal-tx'); renderAll();
 }
 
-// ── INIT ──
+// ════════════════════════════════════════
+// DELETE
+// ════════════════════════════════════════
+function delTx(idx){
+  if(!confirm('確定刪除？')) return;
+  const tx = DB.transactions[idx];
+  if(tx?.cat==='代墊款'){
+    const whoName = tx.item?.replace('代墊-','');
+    const ai = DB.advances.findIndex(a=>a.date===tx.date&&a.who===whoName&&!a.settled);
+    if(ai!==-1) DB.advances.splice(ai,1);
+  }
+  DB.transactions.splice(idx,1);
+  save(); renderAll();
+}
+
+function delAdv(id){
+  if(!confirm('確定刪除？')) return;
+  const ai = DB.advances.findIndex(a=>a.id==id);
+  if(ai!==-1){
+    const adv = DB.advances[ai];
+    const ti = DB.transactions.findIndex(t=>t.cat==='代墊款'&&t.date===adv.date&&t.item===`代墊-${adv.who}`);
+    if(ti!==-1) DB.transactions.splice(ti,1);
+    DB.advances.splice(ai,1);
+  }
+  save(); renderAll();
+}
+
+// ════════════════════════════════════════
+// REPAY
+// ════════════════════════════════════════
+function openRepayModal(id){
+  _repayId = id;
+  const adv = DB.advances.find(a=>a.id==id);
+  document.getElementById('repay-title').textContent = `登記回款 — ${adv?.who} ${adv?.currency==='AUD'?'A$':'$'}${Number(adv?.amount).toLocaleString()}`;
+  document.getElementById('repay-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('repay-method').value = '現金';
+  const banks = (adv?.currency==='AUD'?DB.settings.auBanks:DB.settings.twBanks);
+  const cash = adv?.currency==='AUD'?'現金（AUD）':'現金';
+  document.getElementById('repay-bank').innerHTML = [...banks,cash].map(b=>`<option>${b}</option>`).join('');
+  onRepayMethodChange();
+  document.getElementById('modal-repay').classList.add('open');
+}
+
+function onRepayMethodChange(){
+  const m = document.getElementById('repay-method').value;
+  document.getElementById('repay-bank-grp').style.display = m==='銀行轉帳'?'block':'none';
+}
+
+function saveRepay(){
+  const adv = DB.advances.find(a=>a.id==_repayId);
+  if(!adv) return;
+  const date = document.getElementById('repay-date').value;
+  const method = document.getElementById('repay-method').value;
+  const bank = method==='銀行轉帳'?document.getElementById('repay-bank').value:(adv.currency==='AUD'?'現金（AUD）':'現金');
+  const payMethod = bank.replace('（AUD）','').replace('（TWD）','');
+
+  DB.transactions.push({cat:'代墊回款',date,currency:adv.currency||'TWD',
+    item:`代墊回款—${adv.who}`,note:adv.desc,amount:adv.amount,payMethod});
+  adv.settled = true;
+  adv.settleDate = date;
+  adv.settleMethod = method;
+
+  save(); closeModal('modal-repay'); renderAll();
+}
+
+// ════════════════════════════════════════
+// DEPOSIT
+// ════════════════════════════════════════
+function openDepositModal(){
+  document.getElementById('dep-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('dep-curr').value = 'AUD';
+  document.getElementById('dep-amt').value = '';
+  document.getElementById('dep-desc').value = '';
+  document.getElementById('dep-note').value = '';
+  const allPay = [...DB.settings.auBanks,'現金（AUD）',...DB.settings.twBanks,'現金'];
+  document.getElementById('dep-pay').innerHTML = allPay.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('modal-deposit').classList.add('open');
+}
+
+function saveDeposit(){
+  const date = document.getElementById('dep-date').value;
+  const curr = document.getElementById('dep-curr').value;
+  const amt = Number(document.getElementById('dep-amt').value)||0;
+  const pay = document.getElementById('dep-pay').value;
+  const desc = document.getElementById('dep-desc').value;
+  const note = document.getElementById('dep-note').value;
+  if(!date||!amt){ alert('請填日期和金額'); return; }
+
+  const id = Date.now()+Math.random();
+  // 押金付出記在主帳
+  DB.transactions.push({cat:'押金',date,currency:curr,item:desc||'押金',note,amount:amt,payMethod:pay.replace('（AUD）','').replace('（TWD）','')});
+  if(!DB.deposits) DB.deposits=[];
+  DB.deposits.push({id,date,currency:curr,amount:amt,payMethod:pay,desc,note,returned:false});
+
+  save(); closeModal('modal-deposit'); renderAll();
+}
+
+function openDepositRepayModal(id){
+  _depositRepayId = id;
+  const dep = DB.deposits.find(d=>d.id==id);
+  document.getElementById('dr-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('dr-method').value = '現金';
+  const banks = (dep?.currency==='AUD'?DB.settings.auBanks:DB.settings.twBanks);
+  document.getElementById('dr-bank').innerHTML = [...banks].map(b=>`<option>${b}</option>`).join('');
+  onDRMethodChange();
+  document.getElementById('modal-deposit-repay').classList.add('open');
+}
+
+function onDRMethodChange(){
+  document.getElementById('dr-bank-grp').style.display = document.getElementById('dr-method').value==='銀行轉帳'?'block':'none';
+}
+
+function saveDepositRepay(){
+  const dep = DB.deposits.find(d=>d.id==_depositRepayId);
+  if(!dep) return;
+  const date = document.getElementById('dr-date').value;
+  const method = document.getElementById('dr-method').value;
+  const bank = method==='銀行轉帳'?document.getElementById('dr-bank').value:(dep.currency==='AUD'?'現金（AUD）':'現金');
+
+  DB.transactions.push({cat:'押金退回',date,currency:dep.currency||'TWD',
+    item:`押金退回—${dep.desc||''}`,note:'',amount:dep.amount,
+    payMethod:bank.replace('（AUD）','').replace('（TWD）','')});
+  dep.returned = true;
+  dep.returnDate = date;
+
+  save(); closeModal('modal-deposit-repay'); renderAll();
+}
+
+function delDeposit(id){
+  if(!confirm('確定刪除押金記錄？')) return;
+  const di = DB.deposits.findIndex(d=>d.id==id);
+  if(di!==-1){
+    const dep = DB.deposits[di];
+    const ti = DB.transactions.findIndex(t=>t.cat==='押金'&&t.date===dep.date);
+    if(ti!==-1) DB.transactions.splice(ti,1);
+    DB.deposits.splice(di,1);
+  }
+  save(); renderAll();
+}
+
+// ════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelector(`[onclick="showPage('${name}')"]`).classList.add('active');
+  if(name==='charts') renderCharts();
+}
+
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
 loadFromCloud();
 </script>
 </body>
