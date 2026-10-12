@@ -217,6 +217,13 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
 
 .mt8 { margin-top: 8px; }
 .mt12 { margin-top: 12px; }
+
+/* CHART TABS */
+#cht-tab-trend, #cht-tab-pie { transition: color .15s, border-color .15s; }
+#cht-tab-trend:hover, #cht-tab-pie:hover { color: var(--t2); }
+@media(max-width:600px){
+  #cht-pane-pie > div:last-child { grid-template-columns: 1fr; }
+}
 .section-hdr { font-size: 13px; font-weight: 700; color: var(--t2); margin: 14px 0 8px; display: flex; align-items: center; gap: 6px; }
 .empty { text-align: center; color: var(--t3); font-size: 13px; padding: 32px 0; }
 </style>
@@ -224,7 +231,7 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ v.Pro6</div>
+  <div class="nav-brand">⬡ v.Pro7</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -259,26 +266,55 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
 
 <!-- ══ 圖表 ══ -->
 <div id="page-charts" class="page">
-  <div class="filter-bar">
-    <select id="cf-year" onchange="renderCharts()"></select>
-    <select id="cf-curr" onchange="renderCharts()">
-      <option value="TWD">台幣 TWD</option>
-      <option value="AUD">澳幣 AUD</option>
-    </select>
+  <!-- 幣別 + chart tab 切換 -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <div class="curr-tabs" style="margin:0;flex:0 0 auto;">
+      <button class="curr-tab active-tw" id="ct-twd" onclick="setChartCurr('TWD')">台幣 TWD</button>
+      <button class="curr-tab" id="ct-aud" onclick="setChartCurr('AUD')">澳幣 AUD</button>
+    </div>
   </div>
-  <!-- 月收支摘要卡 -->
-  <div id="chart-summary-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;"></div>
-  <div class="card">
-    <div class="card-title">月收支對比</div>
-    <canvas id="chart-monthly" height="200"></canvas>
+  <div style="display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:0;">
+    <button id="cht-tab-trend" onclick="setChartTab('trend')"
+      style="background:none;border:none;cursor:pointer;padding:8px 14px;font-size:13px;font-weight:600;border-bottom:2px solid var(--accent);color:var(--text);font-family:var(--font);">收支趨勢</button>
+    <button id="cht-tab-pie" onclick="setChartTab('pie')"
+      style="background:none;border:none;cursor:pointer;padding:8px 14px;font-size:13px;color:var(--t3);border-bottom:2px solid transparent;font-family:var(--font);">分類占比</button>
   </div>
-  <div class="card mt12">
-    <div class="card-title">月淨額走勢</div>
-    <canvas id="chart-net" height="160"></canvas>
+
+  <!-- Tab 1: 收支趨勢 -->
+  <div id="cht-pane-trend">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div id="chart-summary-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex:1;margin-right:10px;"></div>
+      <button id="cht-range-btn" onclick="toggleChartRange()"
+        style="background:var(--s2);border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:var(--r-xs);cursor:pointer;font-size:12px;font-family:var(--font);white-space:nowrap;">近6月</button>
+    </div>
+    <div class="card">
+      <div class="card-title">月收支對比</div>
+      <canvas id="chart-monthly" height="200"></canvas>
+    </div>
+    <div class="card mt12">
+      <div class="card-title">月淨額走勢</div>
+      <canvas id="chart-net" height="160"></canvas>
+    </div>
   </div>
-  <div class="card mt12">
-    <div class="card-title">本月支出分類</div>
-    <canvas id="chart-cat" height="200"></canvas>
+
+  <!-- Tab 2: 分類占比 -->
+  <div id="cht-pane-pie" style="display:none;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--t3);">月份</label>
+      <select id="cf-pie-month" onchange="renderPieCharts()" style="width:auto;font-size:12px;padding:6px 10px;"></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card" style="margin:0;">
+        <div class="card-title">支出占比</div>
+        <canvas id="chart-cat-exp" height="200"></canvas>
+        <div id="chart-cat-exp-empty" class="empty" style="display:none;padding:20px 0;">無支出記錄</div>
+      </div>
+      <div class="card" style="margin:0;">
+        <div class="card-title">收入占比</div>
+        <canvas id="chart-cat-inc" height="200"></canvas>
+        <div id="chart-cat-inc-empty" class="empty" style="display:none;padding:20px 0;">無收入記錄</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -361,13 +397,9 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
       <label class="fl">支付方式</label>
       <select id="tx-pay" onchange="onTxPayChange()"></select>
     </div>
-    <div class="fg" id="tx-amt-grp">
+    <div class="fg full" id="tx-amt-grp">
       <label class="fl">金額</label>
       <input type="number" id="tx-amt" placeholder="0" min="0" oninput="onTxAmtChange()">
-    </div>
-    <div class="fg" id="tx-mine-grp">
-      <label class="fl">我的實際支出</label>
-      <input type="number" id="tx-mine" placeholder="預設=總金額" min="0" oninput="updateAlloc()">
     </div>
     <div class="fg full" id="tx-stat-grp">
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--t2);">
@@ -387,12 +419,6 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
       <label class="fl">備註</label>
       <input type="text" id="tx-note" placeholder="選填">
     </div>
-  </div>
-
-  <!-- 分配提示 -->
-  <div id="tx-alloc-bar" style="display:none;background:var(--s2);border-radius:var(--r-xs);padding:8px 12px;margin-top:10px;display:none;justify-content:space-between;align-items:center;">
-    <span style="font-size:12px;color:var(--t3);">已分配</span>
-    <span id="tx-alloc-val" style="font-family:var(--mono);font-size:13px;color:var(--yellow);">$0 / $0</span>
   </div>
 
   <!-- 內部轉帳 -->
@@ -443,8 +469,23 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
       <input type="checkbox" id="tx-adv-check" onchange="onTxAdvCheck()" style="accent-color:var(--yellow);width:16px;height:16px;flex-shrink:0;">
       <span>部分金額為代墊（等對方還款）</span>
     </label>
-    <div id="tx-adv-rows" style="display:none;margin-top:10px;"></div>
-    <button type="button" id="tx-adv-add-btn" onclick="addAdvRow()" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px;font-size:12px;">＋ 新增代墊對象</button>
+    <!-- 代墊展開後顯示：我的金額 + 各代墊對象 -->
+    <div id="tx-adv-detail" style="display:none;margin-top:12px;">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:6px;">填入各代墊對象金額，我的份額自動計算</div>
+      <div id="tx-adv-rows"></div>
+      <button type="button" id="tx-adv-add-btn" onclick="addAdvRow()" class="btn btn-ghost" style="width:100%;margin-top:6px;font-size:12px;">＋ 新增代墊對象</button>
+      <!-- 分配摘要 -->
+      <div id="tx-alloc-summary" style="margin-top:10px;background:var(--s2);border-radius:var(--r-xs);padding:10px 12px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+          <span style="color:var(--t3);">代墊合計</span>
+          <span id="tx-adv-total" style="font-family:var(--mono);color:var(--yellow);">A$0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;">
+          <span style="color:var(--t3);">我的份額</span>
+          <span id="tx-mine-display" style="font-family:var(--mono);color:var(--green);">A$0.00</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="modal-footer">
@@ -711,7 +752,12 @@ function renderAll(){
 
 function fmt(n, curr='TWD'){
   const sym = curr==='AUD' ? 'A$' : '$';
-  return sym + Math.abs(Math.round(n)).toLocaleString();
+  const abs = Math.abs(n);
+  if(curr==='AUD'){
+    // 澳幣保留兩位小數
+    return sym + abs.toLocaleString('en-AU', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  return sym + Math.round(abs).toLocaleString();
 }
 
 // ════════════════════════════════════════
@@ -911,45 +957,94 @@ function renderAdvance(){
 // ════════════════════════════════════════
 // CHARTS
 // ════════════════════════════════════════
-function renderCharts(){
-  const year = document.getElementById('cf-year').value || new Date().getFullYear();
-  const curr = document.getElementById('cf-curr').value || 'TWD';
-  const sym = curr==='AUD'?'A$':'$';
-  const txs = DB.transactions.filter(t=>(t.currency||'TWD')===curr && t.date?.startsWith(year));
+let _chartCurr = 'TWD';
+let _chartRange = 'recent6'; // 'recent6' | 'fullyear'
+let _chartTab = 'trend';     // 'trend' | 'pie'
 
+function setChartCurr(c){
+  _chartCurr = c;
+  document.getElementById('ct-twd').className = 'curr-tab' + (c==='TWD'?' active-tw':'');
+  document.getElementById('ct-aud').className = 'curr-tab' + (c==='AUD'?' active-au':'');
+  renderCharts();
+}
+
+function setChartTab(t){
+  _chartTab = t;
+  document.getElementById('cht-pane-trend').style.display = t==='trend'?'block':'none';
+  document.getElementById('cht-pane-pie').style.display   = t==='pie'?'block':'none';
+  const trendBtn = document.getElementById('cht-tab-trend');
+  const pieBtn   = document.getElementById('cht-tab-pie');
+  trendBtn.style.borderBottomColor = t==='trend'?'var(--accent)':'transparent';
+  trendBtn.style.color = t==='trend'?'var(--text)':'var(--t3)';
+  pieBtn.style.borderBottomColor = t==='pie'?'var(--accent)':'transparent';
+  pieBtn.style.color = t==='pie'?'var(--text)':'var(--t3)';
+  if(t==='pie') renderPieCharts();
+}
+
+function toggleChartRange(){
+  _chartRange = _chartRange==='recent6'?'fullyear':'recent6';
+  document.getElementById('cht-range-btn').textContent = _chartRange==='recent6'?'近6月':'全年';
+  renderTrendCharts();
+}
+
+function renderCharts(){
+  renderTrendCharts();
+  if(_chartTab==='pie') renderPieCharts();
+}
+
+function renderTrendCharts(){
+  const curr = _chartCurr;
+  const sym = curr==='AUD'?'A$':'$';
+  const now = new Date();
   const REAL_EXP = new Set(DB.settings.categories);
-  const monthly = {};
-  for(let m=1;m<=12;m++){
-    const k=`${year}-${String(m).padStart(2,'0')}`;
-    monthly[k]={income:0,expense:0};
+
+  let labels, monthKeys;
+  if(_chartRange==='recent6'){
+    // 近6個月（含本月）
+    monthKeys = [];
+    for(let i=5;i>=0;i--){
+      const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      monthKeys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    }
+    labels = monthKeys.map(k=>{ const [y,m]=k.split('-'); return `${m}月`; });
+  } else {
+    // 全年
+    const year = now.getFullYear();
+    monthKeys = [];
+    for(let m=1;m<=12;m++) monthKeys.push(`${year}-${String(m).padStart(2,'0')}`);
+    labels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   }
+
+  const txs = DB.transactions.filter(t=>(t.currency||'TWD')===curr);
+  const monthly = {};
+  monthKeys.forEach(k=>{ monthly[k]={income:0,expense:0}; });
   txs.forEach(tx=>{
     const k=tx.date?.slice(0,7); if(!monthly[k]) return;
     if(tx.cat==='收入') monthly[k].income+=Number(tx.amount||0);
     else if(REAL_EXP.has(tx.cat)) monthly[k].expense+=Number(tx.amount||0);
   });
 
-  const labels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  const incomes=Object.values(monthly).map(m=>m.income);
-  const expenses=Object.values(monthly).map(m=>m.expense);
-  const nets=incomes.map((inc,i)=>inc-expenses[i]);
+  const incomes  = monthKeys.map(k=>monthly[k].income);
+  const expenses = monthKeys.map(k=>monthly[k].expense);
+  const nets     = incomes.map((inc,i)=>inc-expenses[i]);
 
-  // ── 摘要卡（本年累計）
+  // ── 摘要卡
   const totalInc = incomes.reduce((a,b)=>a+b,0);
   const totalExp = expenses.reduce((a,b)=>a+b,0);
   const totalNet = totalInc - totalExp;
+  const rangeLabel = _chartRange==='recent6'?'近6月累計':'本年累計';
   document.getElementById('chart-summary-row').innerHTML = `
     <div class="sum-card green" style="margin:0;">
-      <div class="sum-label">本年收入</div>
-      <div class="sum-val pos" style="font-size:16px;">${sym}${Math.round(totalInc).toLocaleString()}</div>
+      <div class="sum-label">${rangeLabel}收入</div>
+      <div class="sum-val pos" style="font-size:15px;">${fmt(totalInc,curr)}</div>
     </div>
     <div class="sum-card red" style="margin:0;">
-      <div class="sum-label">本年支出</div>
-      <div class="sum-val neg" style="font-size:16px;">${sym}${Math.round(totalExp).toLocaleString()}</div>
+      <div class="sum-label">${rangeLabel}支出</div>
+      <div class="sum-val neg" style="font-size:15px;">${fmt(totalExp,curr)}</div>
     </div>
     <div class="sum-card ${totalNet>=0?'green':'red'}" style="margin:0;">
-      <div class="sum-label">本年淨額</div>
-      <div class="sum-val ${totalNet>=0?'pos':'neg'}" style="font-size:16px;">${sym}${Math.round(Math.abs(totalNet)).toLocaleString()}</div>
+      <div class="sum-label">淨額</div>
+      <div class="sum-val ${totalNet>=0?'pos':'neg'}" style="font-size:15px;">${totalNet<0?'-':''}${fmt(Math.abs(totalNet),curr)}</div>
     </div>`;
 
   // ── 月收支長條圖
@@ -960,8 +1055,13 @@ function renderCharts(){
       {label:'收入',data:incomes,backgroundColor:'rgba(78,203,141,.75)',borderRadius:4},
       {label:'支出',data:expenses,backgroundColor:'rgba(232,90,122,.75)',borderRadius:4}
     ]},
-    options:{responsive:true,plugins:{legend:{labels:{color:'#a0a0c0',font:{size:11}}}},
-      scales:{x:{ticks:{color:'#606080',font:{size:10}}},y:{ticks:{color:'#606080',font:{size:10},callback:v=>sym+v.toLocaleString()}}}}
+    options:{responsive:true,
+      plugins:{legend:{labels:{color:'#a0a0c0',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#606080',font:{size:10}}},
+        y:{ticks:{color:'#606080',font:{size:10},callback:v=>sym+(curr==='AUD'?v.toFixed(0):Math.round(v).toLocaleString())},
+           grid:{color:'rgba(255,255,255,.04)'}}
+      }}
   });
 
   // ── 月淨額折線圖
@@ -977,33 +1077,66 @@ function renderCharts(){
     options:{responsive:true,plugins:{legend:{display:false}},
       scales:{
         x:{ticks:{color:'#606080',font:{size:10}}},
-        y:{ticks:{color:'#606080',font:{size:10},callback:v=>sym+v.toLocaleString()},
-           grid:{color:'rgba(255,255,255,.05)'},
-           border:{dash:[4,4]}}
+        y:{ticks:{color:'#606080',font:{size:10},callback:v=>sym+(curr==='AUD'?v.toFixed(0):Math.round(v).toLocaleString())},
+           grid:{color:'rgba(255,255,255,.05)'},border:{dash:[4,4]}}
       }}
   });
+}
 
-  // ── 本月支出分類（當前月）
-  const thisMonth = `${year}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
-  const selYear = String(year);
-  const catMonthKey = selYear === String(new Date().getFullYear()) ? thisMonth : `${selYear}-12`;
-  const catData={};
-  txs.filter(t=>REAL_EXP.has(t.cat) && t.date?.slice(0,7)===catMonthKey)
-     .forEach(t=>{ catData[t.cat]=(catData[t.cat]||0)+Number(t.amount||0); });
-  const catLabels=Object.keys(catData);
-  const catVals=Object.values(catData);
-  const colors=['#7c6af7','#4ecb8d','#5ab4f7','#f7c86a','#e85a7a','#f7a05a','#a0a0c0','#e8845a'];
+function renderPieCharts(){
+  const curr = _chartCurr;
+  const REAL_EXP = new Set(DB.settings.categories);
+  const colors=['#7c6af7','#4ecb8d','#5ab4f7','#f7c86a','#e85a7a','#f7a05a','#a0a0c0','#e8845a','#c084fc'];
 
-  if(_charts.cat) _charts.cat.destroy();
-  if(catLabels.length){
-    _charts.cat = new Chart(document.getElementById('chart-cat'),{
+  // 填月份選擇器
+  const monthSel = document.getElementById('cf-pie-month');
+  const months = new Set(DB.transactions.filter(t=>(t.currency||'TWD')===curr).map(t=>t.date?.slice(0,7)).filter(Boolean));
+  const nowKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+  if(!months.has(nowKey)) months.add(nowKey);
+  const sortedMonths = [...months].sort().reverse();
+  if(!monthSel.innerHTML || monthSel.dataset.curr!==curr){
+    monthSel.innerHTML = sortedMonths.map(m=>`<option value="${m}">${m}</option>`).join('');
+    monthSel.dataset.curr = curr;
+    // 預設當月
+    if(sortedMonths.includes(nowKey)) monthSel.value = nowKey;
+  }
+  const selMonth = monthSel.value;
+
+  const txs = DB.transactions.filter(t=>(t.currency||'TWD')===curr && t.date?.startsWith(selMonth));
+
+  // 支出圓餅
+  const expData={};
+  txs.filter(t=>REAL_EXP.has(t.cat)).forEach(t=>{ expData[t.cat]=(expData[t.cat]||0)+Number(t.amount||0); });
+  const expLabels=Object.keys(expData), expVals=Object.values(expData);
+
+  if(_charts.catExp) _charts.catExp.destroy();
+  document.getElementById('chart-cat-exp').style.display = expLabels.length?'block':'none';
+  document.getElementById('chart-cat-exp-empty').style.display = expLabels.length?'none':'block';
+  if(expLabels.length){
+    _charts.catExp = new Chart(document.getElementById('chart-cat-exp'),{
       type:'doughnut',
-      data:{labels:catLabels,datasets:[{data:catVals,backgroundColor:colors,borderWidth:0}]},
-      options:{responsive:true,plugins:{legend:{labels:{color:'#a0a0c0',font:{size:11}}}}}
+      data:{labels:expLabels,datasets:[{data:expVals,backgroundColor:colors,borderWidth:0}]},
+      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#a0a0c0',font:{size:10},padding:8}}}}
     });
-  } else {
-    document.getElementById('chart-cat').parentElement.innerHTML =
-      `<div class="card-title">本月支出分類</div><div class="empty" style="padding:20px 0;">本月無支出記錄</div>`;
+  }
+
+  // 收入圓餅（按 incomeCat 細分）
+  const incData={};
+  txs.filter(t=>t.cat==='收入').forEach(t=>{
+    const k = t.incomeCat||'收入';
+    incData[k]=(incData[k]||0)+Number(t.amount||0);
+  });
+  const incLabels=Object.keys(incData), incVals=Object.values(incData);
+
+  if(_charts.catInc) _charts.catInc.destroy();
+  document.getElementById('chart-cat-inc').style.display = incLabels.length?'block':'none';
+  document.getElementById('chart-cat-inc-empty').style.display = incLabels.length?'none':'block';
+  if(incLabels.length){
+    _charts.catInc = new Chart(document.getElementById('chart-cat-inc'),{
+      type:'doughnut',
+      data:{labels:incLabels,datasets:[{data:incVals,backgroundColor:colors.slice().reverse(),borderWidth:0}]},
+      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#a0a0c0',font:{size:10},padding:8}}}}
+    });
   }
 }
 
@@ -1038,10 +1171,7 @@ function renderSettings(){
     s.creditCards.map(c=>`<div class="setting-row"><span style="flex:1;font-size:13px;">${c}</span>
     <input type="number" id="init-cc-${c}" value="${s.initCC[c]||0}" style="width:130px;"></div>`).join('');
 
-  // Year for charts
-  const years = new Set(DB.transactions.map(t=>t.date?.slice(0,4)).filter(Boolean));
-  years.add(String(new Date().getFullYear()));
-  document.getElementById('cf-year').innerHTML = [...years].sort().reverse().map(y=>`<option>${y}</option>`).join('');
+  // (year select removed in Pro7 — chart uses recent6/fullyear range toggle)
 }
 
 function removeItem(key, idx){
@@ -1080,15 +1210,12 @@ function openTxModal(){
   document.getElementById('tx-date').value = today;
   document.getElementById('tx-curr').value = 'TWD';
   document.getElementById('tx-amt').value = '';
-  document.getElementById('tx-mine').value = '';
   document.getElementById('tx-item').value = '';
   document.getElementById('tx-note').value = '';
   document.getElementById('tx-stat').checked = true;
   document.getElementById('tx-adv-check').checked = false;
-  document.getElementById('tx-adv-rows').style.display = 'none';
+  document.getElementById('tx-adv-detail').style.display = 'none';
   document.getElementById('tx-adv-rows').innerHTML = '';
-  document.getElementById('tx-adv-add-btn').style.display = 'none';
-  document.getElementById('tx-alloc-bar').style.display = 'none';
   document.getElementById('tx-income-amt').value = '';
   document.getElementById('tx-income-item').value = '';
   document.getElementById('tx-income-cat').value = '薪資';
@@ -1142,12 +1269,11 @@ function onTxPayChange(){
   document.getElementById('tx-int-area').style.display = isInternal?'block':'none';
   document.getElementById('tx-cc-area').style.display = isCCFee?'block':'none';
   document.getElementById('tx-amt-grp').style.display = isNormal?'block':'none';
-  document.getElementById('tx-mine-grp').style.display = isNormal?'block':'none';
   document.getElementById('tx-stat-grp').style.display = isNormal?'block':'none';
   document.getElementById('tx-cat-grp').style.display = (isNormal&&document.getElementById('tx-stat').checked)?'block':'none';
   document.getElementById('tx-item-grp').style.display = isNormal?'block':'none';
   document.getElementById('tx-adv-addon').style.display = isNormal?'block':'none';
-  if(!isNormal) document.getElementById('tx-alloc-bar').style.display='none';
+  if(!isNormal){ document.getElementById('tx-adv-check').checked=false; document.getElementById('tx-adv-detail').style.display='none'; }
 }
 
 function onTxStatChange(){
@@ -1156,36 +1282,28 @@ function onTxStatChange(){
 }
 
 function onTxAmtChange(){
-  const total = Number(document.getElementById('tx-amt').value)||0;
-  const mine = document.getElementById('tx-mine');
-  if(mine.value==='' || Number(mine.value)>total) mine.value = total||'';
   updateAlloc();
 }
 
 function updateAlloc(){
   const total = Number(document.getElementById('tx-amt').value)||0;
-  if(!total){ document.getElementById('tx-alloc-bar').style.display='none'; return; }
-  const mine = document.getElementById('tx-mine').value===''?total:Number(document.getElementById('tx-mine').value)||0;
   const curr = document.getElementById('tx-curr').value;
+  if(!document.getElementById('tx-adv-check').checked) return;
   let advTotal = 0;
-  if(document.getElementById('tx-adv-check').checked){
-    [...document.getElementById('tx-adv-rows').children].forEach(row=>{
-      advTotal += Number(row.querySelector('input[type=number]')?.value)||0;
-    });
-  }
-  const allocated = mine + advTotal;
-  const bar = document.getElementById('tx-alloc-bar');
-  bar.style.display = 'flex';
-  const el = document.getElementById('tx-alloc-val');
-  const sym = curr==='AUD'?'A$':'$';
-  el.textContent = `${sym}${allocated.toLocaleString()} / ${sym}${total.toLocaleString()}`;
-  el.style.color = allocated===total?'var(--green)':allocated>total?'var(--red)':'var(--yellow)';
+  [...document.getElementById('tx-adv-rows').children].forEach(row=>{
+    advTotal += Number(row.querySelector('input[type=number]')?.value)||0;
+  });
+  const mine = Math.max(0, total - advTotal);
+  document.getElementById('tx-adv-total').textContent = fmt(advTotal, curr);
+  document.getElementById('tx-mine-display').textContent = fmt(mine, curr);
+  // 顏色提示：超額紅、正好綠、未分配黃
+  const mineEl = document.getElementById('tx-mine-display');
+  mineEl.style.color = advTotal > total ? 'var(--red)' : mine===0&&total>0 ? 'var(--t3)' : 'var(--green)';
 }
 
 function onTxAdvCheck(){
   const checked = document.getElementById('tx-adv-check').checked;
-  document.getElementById('tx-adv-rows').style.display = checked?'block':'none';
-  document.getElementById('tx-adv-add-btn').style.display = checked?'block':'none';
+  document.getElementById('tx-adv-detail').style.display = checked?'block':'none';
   if(checked && document.getElementById('tx-adv-rows').children.length===0) addAdvRow();
   updateAlloc();
 }
@@ -1235,8 +1353,6 @@ function saveTx(){
   }
 
   const total = Number(document.getElementById('tx-amt').value)||0;
-  const mineEl = document.getElementById('tx-mine');
-  const mine = mineEl.value===''?total:Number(mineEl.value);
   const stat = document.getElementById('tx-stat').checked;
   const cat = stat?document.getElementById('tx-cat').value:'不計統計';
   const item = document.getElementById('tx-item').value;
@@ -1252,20 +1368,21 @@ function saveTx(){
     });
   }
 
-  const allocated = mine + advRows.reduce((s,a)=>s+a.amt,0);
-  if(allocated!==total){
-    if(!confirm(`分配金額 ${allocated} 不等於總金額 ${total}，確定繼續？`)) return;
-  }
+  // mine = total - 代墊合計（預設 100%）
+  const advSum = advRows.reduce((s,a)=>s+a.amt,0);
+  if(advSum > total){ alert(`代墊合計 ${fmt(advSum,curr)} 超過總金額 ${fmt(total,curr)}`); return; }
+  const mine = total - advSum;
 
-  // 主帳
+  const _ts = Date.now();
+
+  // 主帳（我的份額）
   if(mine>0){
-    const _ts = Date.now();
     DB.transactions.push({cat,date,ts:_ts,currency:curr,item,note,amount:mine,payMethod:pay});
   }
 
   // 代墊
-  advRows.forEach(a=>{
-    DB.transactions.push({cat:'代墊款',date,ts:_ts+1,currency:curr,item:`代墊-${a.who}`,note,amount:a.amt,payMethod:pay});
+  advRows.forEach((a,i)=>{
+    DB.transactions.push({cat:'代墊款',date,ts:_ts+1+i,currency:curr,item:`代墊-${a.who}`,note,amount:a.amt,payMethod:pay});
     DB.advances.push({id:Date.now()+Math.random(),date,who:a.who,amount:a.amt,currency:curr,desc:item||note,settled:false});
   });
 
@@ -1305,7 +1422,7 @@ function delAdv(id){
 function openRepayModal(id){
   _repayId = id;
   const adv = DB.advances.find(a=>a.id==id);
-  document.getElementById('repay-title').textContent = `登記回款 — ${adv?.who} ${adv?.currency==='AUD'?'A$':'$'}${Number(adv?.amount).toLocaleString()}`;
+  document.getElementById('repay-title').textContent = `登記回款 — ${adv?.who} ${fmt(adv?.amount, adv?.currency||'TWD')}`;
   document.getElementById('repay-date').value = new Date().toISOString().slice(0,10);
   document.getElementById('repay-method').value = '現金';
   const banks = (adv?.currency==='AUD'?DB.settings.auBanks:DB.settings.twBanks);
