@@ -224,7 +224,7 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ v.Pro5</div>
+  <div class="nav-brand">⬡ v.Pro6</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -793,7 +793,11 @@ function renderLedger(){
   const acct = document.getElementById('lf-acct').value;
   const curr = document.getElementById('lf-curr').value;
 
-  let txs = [...DB.transactions].sort((a,b)=>b.date?.localeCompare(a.date));
+  let txs = [...DB.transactions].sort((a,b)=>{
+    const d = (b.date||'').localeCompare(a.date||'');
+    if(d!==0) return d;
+    return (b.ts||0)-(a.ts||0); // 同一天：後新增的排上面
+  });
   if(month) txs = txs.filter(t=>t.date?.startsWith(month));
   if(cat) txs = txs.filter(t=>t.cat===cat || (t.cat==='收入' && t.incomeCat===cat));
   if(acct){
@@ -1207,7 +1211,7 @@ function saveTx(){
   if(pay==='__internal__'){
     const amt = Number(document.getElementById('tx-int-amt').value)||0;
     if(!amt){ alert('請填金額'); return; }
-    DB.transactions.push({cat:'內部轉帳',date,currency:curr,note,amount:amt,intAmt:amt,
+    DB.transactions.push({cat:'內部轉帳',date,ts:Date.now(),currency:curr,note,amount:amt,intAmt:amt,
       intFrom:document.getElementById('tx-int-from').value,
       intTo:document.getElementById('tx-int-to').value});
     save(); closeModal('modal-tx'); renderAll(); return;
@@ -1215,7 +1219,7 @@ function saveTx(){
   if(pay==='__ccfee__'){
     const amt = Number(document.getElementById('tx-cc-amt').value)||0;
     if(!amt){ alert('請填金額'); return; }
-    DB.transactions.push({cat:'信用卡費',date,currency:'TWD',note,amount:amt,ccAmt:amt,
+    DB.transactions.push({cat:'信用卡費',date,ts:Date.now(),currency:'TWD',note,amount:amt,ccAmt:amt,
       ccCard:document.getElementById('tx-cc-card').value,
       ccFrom:document.getElementById('tx-cc-from').value});
     save(); closeModal('modal-tx'); renderAll(); return;
@@ -1225,7 +1229,7 @@ function saveTx(){
     if(!amt){ alert('請填金額'); return; }
     const incCat = document.getElementById('tx-income-cat').value;
     const incItem = document.getElementById('tx-income-item').value;
-    DB.transactions.push({cat:'收入',incomeCat:incCat,date,currency:curr,item:incItem,note,amount:amt,
+    DB.transactions.push({cat:'收入',incomeCat:incCat,date,ts:Date.now(),currency:curr,item:incItem,note,amount:amt,
       payMethod:document.getElementById('tx-income-acc').value});
     save(); closeModal('modal-tx'); renderAll(); return;
   }
@@ -1255,12 +1259,13 @@ function saveTx(){
 
   // 主帳
   if(mine>0){
-    DB.transactions.push({cat,date,currency:curr,item,note,amount:mine,payMethod:pay});
+    const _ts = Date.now();
+    DB.transactions.push({cat,date,ts:_ts,currency:curr,item,note,amount:mine,payMethod:pay});
   }
 
   // 代墊
   advRows.forEach(a=>{
-    DB.transactions.push({cat:'代墊款',date,currency:curr,item:`代墊-${a.who}`,note,amount:a.amt,payMethod:pay});
+    DB.transactions.push({cat:'代墊款',date,ts:_ts+1,currency:curr,item:`代墊-${a.who}`,note,amount:a.amt,payMethod:pay});
     DB.advances.push({id:Date.now()+Math.random(),date,who:a.who,amount:a.amt,currency:curr,desc:item||note,settled:false});
   });
 
@@ -1323,7 +1328,7 @@ function saveRepay(){
   const bank = method==='銀行轉帳'?document.getElementById('repay-bank').value:(adv.currency==='AUD'?'現金（AUD）':'現金');
   const payMethod = bank.replace('（AUD）','').replace('（TWD）','');
 
-  DB.transactions.push({cat:'代墊回款',date,currency:adv.currency||'TWD',
+  DB.transactions.push({cat:'代墊回款',date,ts:Date.now(),currency:adv.currency||'TWD',
     item:`代墊回款—${adv.who}`,note:adv.desc,amount:adv.amount,payMethod});
   adv.settled = true;
   adv.settleDate = date;
@@ -1357,7 +1362,7 @@ function saveDeposit(){
 
   const id = Date.now()+Math.random();
   // 押金付出記在主帳
-  DB.transactions.push({cat:'押金',date,currency:curr,item:desc||'押金',note,amount:amt,payMethod:pay.replace('（AUD）','').replace('（TWD）','')});
+  DB.transactions.push({cat:'押金',date,ts:Date.now(),currency:curr,item:desc||'押金',note,amount:amt,payMethod:pay.replace('（AUD）','').replace('（TWD）','')});
   if(!DB.deposits) DB.deposits=[];
   DB.deposits.push({id,date,currency:curr,amount:amt,payMethod:pay,desc,note,returned:false});
 
@@ -1386,7 +1391,7 @@ function saveDepositRepay(){
   const method = document.getElementById('dr-method').value;
   const bank = method==='銀行轉帳'?document.getElementById('dr-bank').value:(dep.currency==='AUD'?'現金（AUD）':'現金');
 
-  DB.transactions.push({cat:'押金退回',date,currency:dep.currency||'TWD',
+  DB.transactions.push({cat:'押金退回',date,ts:Date.now(),currency:dep.currency||'TWD',
     item:`押金退回—${dep.desc||''}`,note:'',amount:dep.amount,
     payMethod:bank.replace('（AUD）','').replace('（TWD）','')});
   dep.returned = true;
