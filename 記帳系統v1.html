@@ -224,7 +224,7 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ v.Pro1</div>
+  <div class="nav-brand">⬡ v.Pro2</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -361,7 +361,7 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
     </div>
     <div class="fg" id="tx-mine-grp">
       <label class="fl">我的實際支出</label>
-      <input type="number" id="tx-mine" placeholder="預設=總金額" min="0">
+      <input type="number" id="tx-mine" placeholder="預設=總金額" min="0" oninput="updateAlloc()">
     </div>
     <div class="fg full" id="tx-stat-grp">
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--t2);">
@@ -620,34 +620,46 @@ function computeAll(){
     const banks = curr === 'TWD' ? twBanks : auBanks;
     const isAU = curr === 'AUD';
 
+    // 判斷現金（台幣現金 或 澳幣現金）
+    const isTWCash = tx.payMethod === '現金';
+    const isAUCash = tx.payMethod === '現金（AUD）';
+    const isCash = isTWCash || isAUCash;
+
+    const addCash = (v) => { if(isAUCash) auCash+=v; else twCash+=v; };
+    const subCash = (v) => { if(isAUCash) auCash-=v; else twCash-=v; };
+
     if(tx.cat === '收入'){
-      if(tx.payMethod === '現金'){ if(isAU) auCash+=a; else twCash+=a; }
+      if(isCash) addCash(a);
       else if(banks[tx.payMethod] !== undefined) banks[tx.payMethod] += a;
     } else if(tx.cat === '內部轉帳'){
-      const fromBanks = (tx.intFromCurr||curr) === 'AUD' ? auBanks : twBanks;
-      const toBanks = (tx.intToCurr||curr) === 'AUD' ? auBanks : twBanks;
-      const fromCash = (tx.intFromCurr||curr) === 'AUD' ? 'AUCash' : 'TWCash';
-      const toCash = (tx.intToCurr||curr) === 'AUD' ? 'AUCash' : 'TWCash';
       const intA = Number(tx.intAmt) || 0;
-      if(tx.intFrom === '現金'){ if(fromCash==='AUCash') auCash-=intA; else twCash-=intA; }
-      else if(fromBanks[tx.intFrom] !== undefined) fromBanks[tx.intFrom] -= intA;
-      if(tx.intTo === '現金'){ if(toCash==='AUCash') auCash+=intA; else twCash+=intA; }
-      else if(toBanks[tx.intTo] !== undefined) toBanks[tx.intTo] += intA;
+      const fromIsAUCash = tx.intFrom === '現金（AUD）';
+      const fromIsTWCash = tx.intFrom === '現金';
+      const toIsAUCash = tx.intTo === '現金（AUD）';
+      const toIsTWCash = tx.intTo === '現金';
+      if(fromIsAUCash) auCash-=intA;
+      else if(fromIsTWCash) twCash-=intA;
+      else if(twBanks[tx.intFrom] !== undefined) twBanks[tx.intFrom]-=intA;
+      else if(auBanks[tx.intFrom] !== undefined) auBanks[tx.intFrom]-=intA;
+      if(toIsAUCash) auCash+=intA;
+      else if(toIsTWCash) twCash+=intA;
+      else if(twBanks[tx.intTo] !== undefined) twBanks[tx.intTo]+=intA;
+      else if(auBanks[tx.intTo] !== undefined) auBanks[tx.intTo]+=intA;
     } else if(tx.cat === '信用卡費'){
       const ccA = Number(tx.ccAmt) || 0;
       if(twBanks[tx.ccFrom] !== undefined) twBanks[tx.ccFrom] -= ccA;
+      else if(tx.ccFrom === '現金') twCash -= ccA;
       if(cc[tx.ccCard] !== undefined) cc[tx.ccCard] = Math.max(0, cc[tx.ccCard] - ccA);
-    } else if(tx.cat === '代墊回款'){
-      if(tx.payMethod === '現金'){ if(isAU) auCash+=a; else twCash+=a; }
-      else if(banks[tx.payMethod] !== undefined) banks[tx.payMethod] += a;
-    } else if(tx.cat === '押金退回'){
-      if(tx.payMethod === '現金'){ if(isAU) auCash+=a; else twCash+=a; }
-      else if(banks[tx.payMethod] !== undefined) banks[tx.payMethod] += a;
+    } else if(tx.cat === '代墊回款' || tx.cat === '押金退回'){
+      if(isCash) addCash(a);
+      else if(twBanks[tx.payMethod] !== undefined) twBanks[tx.payMethod] += a;
+      else if(auBanks[tx.payMethod] !== undefined) auBanks[tx.payMethod] += a;
     } else {
-      // 一般支出、代墊款
-      if(tx.payMethod === '現金'){ if(isAU) auCash-=a; else twCash-=a; }
+      // 一般支出、代墊款、押金、不計統計
+      if(isCash) subCash(a);
       else if(s.creditCards.includes(tx.payMethod)) cc[tx.payMethod] = (cc[tx.payMethod]||0) + a;
-      else if(banks[tx.payMethod] !== undefined) banks[tx.payMethod] -= a;
+      else if(twBanks[tx.payMethod] !== undefined) twBanks[tx.payMethod] -= a;
+      else if(auBanks[tx.payMethod] !== undefined) auBanks[tx.payMethod] -= a;
     }
   });
 
