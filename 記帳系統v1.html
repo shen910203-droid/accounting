@@ -110,7 +110,7 @@ nav {
 .b-醫療 { background: rgba(232,90,122,.15); color: var(--red); }
 .b-居住,.b-房租 { background: rgba(247,200,106,.15); color: var(--yellow); }
 .b-雜支,.b-其他 { background: rgba(96,96,128,.15); color: var(--t2); }
-.b-收入 { background: rgba(76,203,141,.2); color: var(--green); }
+.b-收入,.b-薪資,.b-業績,.b-業績獎金,.b-退款,.b-代墊回收,.b-其他收入 { background: rgba(76,203,141,.2); color: var(--green); }
 .b-代墊款 { background: rgba(247,200,106,.15); color: var(--yellow); }
 .b-代墊回款 { background: rgba(76,203,141,.15); color: var(--green); }
 .b-內部轉帳 { background: rgba(124,106,247,.1); color: var(--accent); }
@@ -224,7 +224,7 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ v.Pro4</div>
+  <div class="nav-brand">⬡ v.Pro5</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -266,13 +266,19 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
       <option value="AUD">澳幣 AUD</option>
     </select>
   </div>
+  <!-- 月收支摘要卡 -->
+  <div id="chart-summary-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;"></div>
   <div class="card">
-    <div class="card-title">月收支</div>
-    <canvas id="chart-monthly" height="220"></canvas>
+    <div class="card-title">月收支對比</div>
+    <canvas id="chart-monthly" height="200"></canvas>
   </div>
   <div class="card mt12">
-    <div class="card-title">支出分類</div>
-    <canvas id="chart-cat" height="220"></canvas>
+    <div class="card-title">月淨額走勢</div>
+    <canvas id="chart-net" height="160"></canvas>
+  </div>
+  <div class="card mt12">
+    <div class="card-title">本月支出分類</div>
+    <canvas id="chart-cat" height="200"></canvas>
   </div>
 </div>
 
@@ -417,6 +423,16 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
     <div class="form-grid">
       <div class="fg"><label class="fl">金額</label><input type="number" id="tx-income-amt" placeholder="0"></div>
       <div class="fg"><label class="fl">存入帳戶</label><select id="tx-income-acc"></select></div>
+      <div class="fg"><label class="fl">收入類別</label>
+        <select id="tx-income-cat">
+          <option value="薪資">薪資</option>
+          <option value="業績">業績/獎金</option>
+          <option value="退款">退款</option>
+          <option value="代墊回收">代墊回收</option>
+          <option value="其他收入">其他收入</option>
+        </select>
+      </div>
+      <div class="fg full"><label class="fl">說明</label><input type="text" id="tx-income-item" placeholder="選填"></div>
     </div>
   </div>
 
@@ -764,7 +780,7 @@ function fillLedgerFilters(){
   const cur = mSel.value;
   mSel.innerHTML = '<option value="">全部月份</option>' + [...months].sort().reverse().map(m=>`<option ${m===cur?'selected':''}>${m}</option>`).join('');
 
-  const cats = ['全部類別',...s.categories,'收入','代墊款','代墊回款','內部轉帳','信用卡費','不計統計','押金','押金退回'];
+  const cats = ['全部類別',...s.categories,'收入','薪資','業績/獎金','退款','代墊回收','其他收入','代墊款','代墊回款','內部轉帳','信用卡費','不計統計','押金','押金退回'];
   document.getElementById('lf-cat').innerHTML = cats.map((c,i)=>`<option value="${i===0?'':c}">${c}</option>`).join('');
 
   const allAccts = [...s.twBanks,...s.auBanks,...s.creditCards,'現金（TWD）','現金（AUD）'];
@@ -779,7 +795,7 @@ function renderLedger(){
 
   let txs = [...DB.transactions].sort((a,b)=>b.date?.localeCompare(a.date));
   if(month) txs = txs.filter(t=>t.date?.startsWith(month));
-  if(cat) txs = txs.filter(t=>t.cat===cat);
+  if(cat) txs = txs.filter(t=>t.cat===cat || (t.cat==='收入' && t.incomeCat===cat));
   if(acct){
     txs = txs.filter(t=>{
       const a = acct.replace('（TWD）','').replace('（AUD）','');
@@ -806,11 +822,13 @@ function renderLedger(){
     else amtStr=`<span class="tx-amt out">-${fmt(tx.amount,curr)}</span>`;
 
     const catClass = 'b-' + (tx.cat||'').replace(/\s/g,'');
+    const displayLabel = tx.cat==='收入' && tx.incomeCat ? tx.incomeCat : (tx.cat||'');
+    const displayDesc = tx.cat==='收入' ? (tx.item||tx.incomeCat||'') : (tx.item||'');
     return `<div class="tx-row">
       <div class="tx-date">${tx.date||''}</div>
-      <div><span class="tx-badge ${catClass}">${tx.cat||''}</span></div>
+      <div><span class="tx-badge ${catClass}">${displayLabel}</span></div>
       <div class="tx-desc">
-        <div class="tx-desc-main">${tx.item||''}</div>
+        <div class="tx-desc-main">${displayDesc}</div>
         ${tx.note?`<div class="tx-desc-sub">${tx.note}</div>`:''}
       </div>
       ${amtStr}
@@ -892,6 +910,7 @@ function renderAdvance(){
 function renderCharts(){
   const year = document.getElementById('cf-year').value || new Date().getFullYear();
   const curr = document.getElementById('cf-curr').value || 'TWD';
+  const sym = curr==='AUD'?'A$':'$';
   const txs = DB.transactions.filter(t=>(t.currency||'TWD')===curr && t.date?.startsWith(year));
 
   const REAL_EXP = new Set(DB.settings.categories);
@@ -909,21 +928,64 @@ function renderCharts(){
   const labels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   const incomes=Object.values(monthly).map(m=>m.income);
   const expenses=Object.values(monthly).map(m=>m.expense);
+  const nets=incomes.map((inc,i)=>inc-expenses[i]);
 
+  // ── 摘要卡（本年累計）
+  const totalInc = incomes.reduce((a,b)=>a+b,0);
+  const totalExp = expenses.reduce((a,b)=>a+b,0);
+  const totalNet = totalInc - totalExp;
+  document.getElementById('chart-summary-row').innerHTML = `
+    <div class="sum-card green" style="margin:0;">
+      <div class="sum-label">本年收入</div>
+      <div class="sum-val pos" style="font-size:16px;">${sym}${Math.round(totalInc).toLocaleString()}</div>
+    </div>
+    <div class="sum-card red" style="margin:0;">
+      <div class="sum-label">本年支出</div>
+      <div class="sum-val neg" style="font-size:16px;">${sym}${Math.round(totalExp).toLocaleString()}</div>
+    </div>
+    <div class="sum-card ${totalNet>=0?'green':'red'}" style="margin:0;">
+      <div class="sum-label">本年淨額</div>
+      <div class="sum-val ${totalNet>=0?'pos':'neg'}" style="font-size:16px;">${sym}${Math.round(Math.abs(totalNet)).toLocaleString()}</div>
+    </div>`;
+
+  // ── 月收支長條圖
   if(_charts.monthly) _charts.monthly.destroy();
   _charts.monthly = new Chart(document.getElementById('chart-monthly'),{
     type:'bar',
     data:{labels,datasets:[
-      {label:'收入',data:incomes,backgroundColor:'rgba(78,203,141,.7)',borderRadius:4},
-      {label:'支出',data:expenses,backgroundColor:'rgba(232,90,122,.7)',borderRadius:4}
+      {label:'收入',data:incomes,backgroundColor:'rgba(78,203,141,.75)',borderRadius:4},
+      {label:'支出',data:expenses,backgroundColor:'rgba(232,90,122,.75)',borderRadius:4}
     ]},
-    options:{responsive:true,plugins:{legend:{labels:{color:'#a0a0c0'}}},
-      scales:{x:{ticks:{color:'#606080'}},y:{ticks:{color:'#606080'}}}}
+    options:{responsive:true,plugins:{legend:{labels:{color:'#a0a0c0',font:{size:11}}}},
+      scales:{x:{ticks:{color:'#606080',font:{size:10}}},y:{ticks:{color:'#606080',font:{size:10},callback:v=>sym+v.toLocaleString()}}}}
   });
 
-  // Cat pie
+  // ── 月淨額折線圖
+  if(_charts.net) _charts.net.destroy();
+  _charts.net = new Chart(document.getElementById('chart-net'),{
+    type:'line',
+    data:{labels,datasets:[{
+      label:'月淨額',data:nets,
+      borderColor:'#7c6af7',backgroundColor:'rgba(124,106,247,.15)',
+      pointBackgroundColor: nets.map(n=>n>=0?'#4ecb8d':'#e85a7a'),
+      pointRadius:4,fill:true,tension:.35
+    }]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#606080',font:{size:10}}},
+        y:{ticks:{color:'#606080',font:{size:10},callback:v=>sym+v.toLocaleString()},
+           grid:{color:'rgba(255,255,255,.05)'},
+           border:{dash:[4,4]}}
+      }}
+  });
+
+  // ── 本月支出分類（當前月）
+  const thisMonth = `${year}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+  const selYear = String(year);
+  const catMonthKey = selYear === String(new Date().getFullYear()) ? thisMonth : `${selYear}-12`;
   const catData={};
-  txs.filter(t=>REAL_EXP.has(t.cat)).forEach(t=>{ catData[t.cat]=(catData[t.cat]||0)+Number(t.amount||0); });
+  txs.filter(t=>REAL_EXP.has(t.cat) && t.date?.slice(0,7)===catMonthKey)
+     .forEach(t=>{ catData[t.cat]=(catData[t.cat]||0)+Number(t.amount||0); });
   const catLabels=Object.keys(catData);
   const catVals=Object.values(catData);
   const colors=['#7c6af7','#4ecb8d','#5ab4f7','#f7c86a','#e85a7a','#f7a05a','#a0a0c0','#e8845a'];
@@ -933,8 +995,11 @@ function renderCharts(){
     _charts.cat = new Chart(document.getElementById('chart-cat'),{
       type:'doughnut',
       data:{labels:catLabels,datasets:[{data:catVals,backgroundColor:colors,borderWidth:0}]},
-      options:{responsive:true,plugins:{legend:{labels:{color:'#a0a0c0'}}}}
+      options:{responsive:true,plugins:{legend:{labels:{color:'#a0a0c0',font:{size:11}}}}}
     });
+  } else {
+    document.getElementById('chart-cat').parentElement.innerHTML =
+      `<div class="card-title">本月支出分類</div><div class="empty" style="padding:20px 0;">本月無支出記錄</div>`;
   }
 }
 
@@ -1020,6 +1085,9 @@ function openTxModal(){
   document.getElementById('tx-adv-rows').innerHTML = '';
   document.getElementById('tx-adv-add-btn').style.display = 'none';
   document.getElementById('tx-alloc-bar').style.display = 'none';
+  document.getElementById('tx-income-amt').value = '';
+  document.getElementById('tx-income-item').value = '';
+  document.getElementById('tx-income-cat').value = '薪資';
 
   onTxCurrChange();
   onTxStatChange();
@@ -1155,7 +1223,9 @@ function saveTx(){
   if(pay==='__income__'){
     const amt = Number(document.getElementById('tx-income-amt').value)||0;
     if(!amt){ alert('請填金額'); return; }
-    DB.transactions.push({cat:'收入',date,currency:curr,note,amount:amt,
+    const incCat = document.getElementById('tx-income-cat').value;
+    const incItem = document.getElementById('tx-income-item').value;
+    DB.transactions.push({cat:'收入',incomeCat:incCat,date,currency:curr,item:incItem,note,amount:amt,
       payMethod:document.getElementById('tx-income-acc').value});
     save(); closeModal('modal-tx'); renderAll(); return;
   }
