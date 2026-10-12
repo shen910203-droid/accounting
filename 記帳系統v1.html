@@ -224,7 +224,7 @@ input[type=number]::-webkit-inner-spin-button { opacity: .5; }
 <body>
 
 <nav>
-  <div class="nav-brand">⬡ v.Pro3</div>
+  <div class="nav-brand">⬡ v.Pro4</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('overview')">總覽</button>
     <button class="nav-tab" onclick="showPage('ledger')">明細</button>
@@ -589,14 +589,12 @@ async function save(){
   if(_saving) return;
   _saving = true;
   try {
-    await fetch(CLOUD_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({method:'save', data: DB})
-    });
+    const url = CLOUD_URL + '?method=save&data=' + encodeURIComponent(json);
+    const r = await fetch(url, {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP ' + r.status);
     showSyncStatus('已同步 ✓','ok');
   } catch(e) {
-    showSyncStatus('離線模式','warn');
+    showSyncStatus('本地已儲存','warn');
   }
   _saving = false;
 }
