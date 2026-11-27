@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Expense Manager">
 <meta name="theme-color" content="#0b0b12">
 <title>Expense Manager</title>
@@ -548,9 +548,10 @@ button,.bnav,.tabs,.fab,.pin-pad,.seg,.chip,.st-k,.tx-badge{-webkit-user-select:
 .st-d{cursor:pointer}
 .edit-hint{font-size:12.5px;color:var(--amb);font-weight:700;line-height:1.55;margin:-4px 2px 12px;display:none}
 .rp-toast{white-space:normal;text-align:center;line-height:1.45}
-/* iOS 26 以後桌面 App 頂端約 95pt 內會被系統模糊（網頁關不掉），標題列內容往下移 28px 避開 */
-html.standalone .top{padding-top:calc(38px + var(--st))}
-html.standalone .page{padding-top:calc(104px + var(--st))}
+/* iOS 26：半透明狀態列的桌面 App 頂端約 95pt 會被系統模糊，標題列往下移 28px 避開。
+   只在還是半透明（頂端安全區 > 0，edit.js 加 sb-blur）時才移；重新加入主畫面變實心後就不移 */
+html.sb-blur .top{padding-top:calc(38px + var(--st))}
+html.sb-blur .page{padding-top:calc(104px + var(--st))}
 /* 隱藏的提示框、彈出背景：完全移除，不是只變透明（之前會殘留在標題上方） */
 .rp-toast{visibility:hidden;transition:opacity .25s,transform .25s,visibility 0s linear .25s}
 .rp-toast.show{visibility:visible;transition:opacity .25s,transform .25s,visibility 0s}
@@ -579,7 +580,7 @@ html.standalone .page{padding-top:calc(104px + var(--st))}
 <div id="pin-lock">
   <div class="pin-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.6 20.2 7.3v9.4L12 21.4 3.8 16.7V7.3z"/><path d="M14.4 9.2c-.5-.8-1.4-1.2-2.4-1.2-1.4 0-2.4.7-2.4 1.8 0 2.5 4.9 1.4 4.9 4 0 1.1-1 1.9-2.5 1.9-1.1 0-2-.4-2.6-1.3M12 6.6v1.4M12 15.7v1.5"/></svg></div>
   <div class="pin-title">Expense Manager</div>
-  <div class="pin-subtitle">v.Pro13.6 · TWD / AUD</div>
+  <div class="pin-subtitle">v.Pro13.7 · TWD / AUD</div>
   <div class="pin-label" id="pin-label">請輸入密碼</div>
   <div class="pin-dots" id="pin-dots">
     <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -606,7 +607,7 @@ html.standalone .page{padding-top:calc(104px + var(--st))}
 <header class="top">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.6 20.2 7.3v9.4L12 21.4 3.8 16.7V7.3z"/><path d="M14.4 9.2c-.5-.8-1.4-1.2-2.4-1.2-1.4 0-2.4.7-2.4 1.8 0 2.5 4.9 1.4 4.9 4 0 1.1-1 1.9-2.5 1.9-1.1 0-2-.4-2.6-1.3M12 6.6v1.4M12 15.7v1.5"/></svg></div>
-    <div><b>Expense Manager</b><small>v.Pro13.6 · TWD / AUD</small></div>
+    <div><b>Expense Manager</b><small>v.Pro13.7 · TWD / AUD</small></div>
   </div>
   <nav class="tabs">
     <button data-page="overview" class="on" onclick="showPage('overview')"><svg class="i" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>總覽</button>
@@ -776,6 +777,7 @@ html.standalone .page{padding-top:calc(104px + var(--st))}
       <button class="btn btn-ghost" style="flex:1;" onclick="sendTestEmail(this)">寄測試信</button>
     </div>
     <div id="set-backend-ver" class="text-muted" style="margin-top:10px;line-height:1.6;"></div>
+    <div id="set-screen-info" class="text-muted" style="margin-top:6px;font-size:11.5px;line-height:1.6;"></div>
   </div>
   <div class="card">
     <div class="card-title">租務</div>
@@ -2003,6 +2005,7 @@ function renderSettings(){
   if(re && document.activeElement !== re) re.value = s.reminderEmail || '';
   const ws = (DB.rent && DB.rent.weekStart===1) ? 1 : 0;
   [0,1].forEach(i=>{ const b=document.getElementById('ws-'+i); if(b) b.classList.toggle('on', i===ws); });
+  const si = document.getElementById('set-screen-info'); if(si) si.innerHTML = scrInfo();
   const bv = document.getElementById('set-backend-ver');
   if(bv) bv.innerHTML = !_backendVersion ? '後端版本：尚未連線' : (/^v3/.test(_backendVersion)
     ? '<span style="color:var(--grn)">● 後端 ' + _backendVersion + '：Email 提醒已支援</span>'
@@ -4100,8 +4103,20 @@ const Recur = (function () {
   return { render: render, act: act, dues: dues, openPay: openPay, openForm: openForm, accountsFor: accountsFor };
 })();
 
-// 桌面 App（加到主畫面）模式：標題列避開 iOS 頂端的系統模糊區
-try { if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('standalone'); } catch (e) {}
+// 桌面 App（加到主畫面）模式
+// 13.7 起狀態列改成實心（black），但 iPhone 只在「加入主畫面」那一刻讀這個設定：
+//   舊的主畫面 App 還是半透明 → 頂端安全區 > 0 → 加 sb-blur，標題列往下移避開系統模糊（同 13.3）
+//   重新加入主畫面後是實心 → 安全區 = 0 → 不移，頂部不再空一段
+try {
+  if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) {
+    document.documentElement.classList.add('standalone');
+    const p = document.createElement('div');
+    p.style.cssText = 'position:fixed;visibility:hidden;height:env(safe-area-inset-top)';
+    document.body.appendChild(p);
+    if (p.getBoundingClientRect().height > 0) document.documentElement.classList.add('sb-blur');
+    p.remove();
+  }
+} catch (e) {}
 // ════════════════════════════════════════
 // 編輯明細（改完所有連動一起更新：餘額、統計、代墊、欠款、押金、每月固定）
 // ════════════════════════════════════════
@@ -4355,6 +4370,18 @@ var _ready = false, _conflictOpen = false, _lastLoadAt = 0;
 // 離線開啟：註冊 Service Worker（sw.js 和網頁放在同一個資料夾；本機 file:// 測試時不註冊）
 if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
   window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(e=>console.warn('離線功能註冊失敗：', e && e.message)); });
+}
+
+// 螢幕資訊（設定頁最下面，排查 iPhone 主畫面模式頂部 / 底部顯示問題用，同 ParcelPay）
+function scrInfo(){
+  const p = document.createElement('div');
+  p.style.cssText = 'position:fixed;visibility:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)';
+  document.body.appendChild(p);
+  const cs = getComputedStyle(p), st = parseFloat(cs.paddingTop)||0, sb = parseFloat(cs.paddingBottom)||0; p.remove();
+  const app = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  const vv = window.visualViewport, nv = document.querySelector('.bnav'), nb = nv ? Math.round(nv.getBoundingClientRect().bottom) : '-';
+  const bar = !app ? '瀏覽器' : (document.documentElement.classList.contains('sb-blur') ? 'App · 狀態列半透明（要重新加入主畫面）' : 'App · 狀態列實心');
+  return `螢幕 ${screen.width}×${screen.height} · 視窗 ${innerWidth}×${innerHeight}<br>可視 ${vv?Math.round(vv.height):'-'} · 選單底 ${nb} · 頁高 ${document.documentElement.scrollHeight}<br>安全區 上${Math.round(st)} 下${Math.round(sb)} · ${bar}`;
 }
 
 // 把使用者輸入的文字放進畫面前，轉成純文字（例如備註打「a<b」不會把後面吃掉）
