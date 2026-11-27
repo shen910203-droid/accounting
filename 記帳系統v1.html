@@ -578,6 +578,38 @@ html.standalone:not(.sb-blur) #pin-lock{background:linear-gradient(var(--bg) 0,r
 .brand small{display:block;white-space:nowrap;overflow:hidden;min-width:0}
 .adv-amt,.kpi b,.sum-val,.big{white-space:nowrap;overflow:hidden}
 .rp .kpi b,.rp .big{white-space:nowrap;overflow:hidden}
+
+/* ---------- 13.10：類別圖案 / 小類 ---------- */
+.cat-ic{width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:color-mix(in srgb,var(--c1,var(--dim)) 16%,transparent);color:var(--c1,var(--dim))}
+.cat-ic.big{width:38px;height:38px;border-radius:12px}
+.tx-row .cat-ic{align-self:center}
+.tx-row{gap:10px}
+#set-cats .cat-row{width:100%;gap:10px;border-radius:16px;padding:6px 6px 6px 6px}
+#cat-ed-body .setting-row{width:100%;border-radius:14px;padding:3px 4px 3px 13px;margin-bottom:6px}
+#cat-ed-body .setting-tag{flex:1}
+.cat-name{flex:1;min-width:0;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.cat-name b{font-size:14px}
+.cat-name small{font-size:11.5px;color:var(--dim);font-weight:600;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:8px}
+.cat-pick{height:42px;border-radius:12px;background:var(--card2);border:1px solid var(--line);color:var(--mut);display:grid;place-items:center}
+.cat-pick.on{background:color-mix(in srgb,var(--c1) 18%,transparent);border-color:var(--c1);color:var(--c1)}
+.cat-sw{width:36px;height:36px;justify-self:center;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 1px var(--line2) inset}
+.cat-sw.on{border-color:#fff}
+.chips-row{display:flex;flex-wrap:wrap;gap:7px}
+.sub-chip{height:34px;padding:0 13px;border-radius:17px;background:var(--card2);border:1px solid var(--line2);font-size:13px;font-weight:700;color:var(--mut)}
+.sub-chip.on{background:color-mix(in srgb,var(--c1) 18%,transparent);border-color:var(--c1);color:var(--c1)}
+#cat-breakdown{margin-top:12px}
+.cb-row{display:flex;align-items:center;gap:9px;padding:8px 2px;border-top:1px solid var(--line);cursor:pointer}
+.cb-row .cat-ic{width:26px;height:26px;border-radius:8px}
+.cb-name{flex:1;min-width:0;font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.cb-row b{font-size:13px}
+.cb-row small,.cb-sub small{width:34px;text-align:right;font-size:11px;color:var(--dim);font-weight:700}
+.cb-arrow{width:12px;color:var(--dim);font-size:11px}
+.cb-sub{display:flex;align-items:center;gap:9px;padding:5px 2px 5px 37px;font-size:12.5px;color:var(--mut)}
+.cb-sub span{flex:1;min-width:0;overflow-wrap:anywhere}
+.cb-sub b{font-size:12.5px;color:var(--tx)}
+.cb-sub small{margin-right:21px}
 </style>
 </head>
 <body class="locked">
@@ -586,7 +618,7 @@ html.standalone:not(.sb-blur) #pin-lock{background:linear-gradient(var(--bg) 0,r
 <div id="pin-lock">
   <div class="pin-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.6 20.2 7.3v9.4L12 21.4 3.8 16.7V7.3z"/><path d="M14.4 9.2c-.5-.8-1.4-1.2-2.4-1.2-1.4 0-2.4.7-2.4 1.8 0 2.5 4.9 1.4 4.9 4 0 1.1-1 1.9-2.5 1.9-1.1 0-2-.4-2.6-1.3M12 6.6v1.4M12 15.7v1.5"/></svg></div>
   <div class="pin-title">Expense Manager</div>
-  <div class="pin-subtitle">v.Pro13.9 · TWD / AUD</div>
+  <div class="pin-subtitle">v.Pro13.10 · TWD / AUD</div>
   <div class="pin-label" id="pin-label">請輸入密碼</div>
   <div class="pin-dots" id="pin-dots">
     <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -613,7 +645,7 @@ html.standalone:not(.sb-blur) #pin-lock{background:linear-gradient(var(--bg) 0,r
 <header class="top">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.6 20.2 7.3v9.4L12 21.4 3.8 16.7V7.3z"/><path d="M14.4 9.2c-.5-.8-1.4-1.2-2.4-1.2-1.4 0-2.4.7-2.4 1.8 0 2.5 4.9 1.4 4.9 4 0 1.1-1 1.9-2.5 1.9-1.1 0-2-.4-2.6-1.3M12 6.6v1.4M12 15.7v1.5"/></svg></div>
-    <div><b>Expense Manager</b><small>v.Pro13.9 · TWD / AUD</small></div>
+    <div><b>Expense Manager</b><small>v.Pro13.10 · TWD / AUD</small></div>
   </div>
   <nav class="tabs">
     <button data-page="overview" class="on" onclick="showPage('overview')"><svg class="i" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>總覽</button>
@@ -709,6 +741,7 @@ html.standalone:not(.sb-blur) #pin-lock{background:linear-gradient(var(--bg) 0,r
         <div class="card-title">支出占比</div>
         <canvas id="chart-cat-exp" height="200"></canvas>
         <div id="chart-cat-exp-empty" class="empty" style="display:none;">無支出記錄</div>
+        <div id="cat-breakdown"></div>
       </div>
       <div class="card" style="margin:0;">
         <div class="card-title">收入占比</div>
@@ -859,6 +892,10 @@ html.standalone:not(.sb-blur) #pin-lock{background:linear-gradient(var(--bg) 0,r
     <div class="fg" id="tx-cat-grp">
       <label class="fl">類別</label>
       <select id="tx-cat"></select>
+    </div>
+    <div class="fg full" id="tx-sub-grp" style="display:none;">
+      <label class="fl">小類（選填）</label>
+      <div class="chips-row" id="tx-sub"></div>
     </div>
     <div class="fg full" id="tx-item-grp">
       <label class="fl">說明</label>
@@ -1611,11 +1648,11 @@ function renderLedger(){
       html += `<div class="dgroup"><h4>${dayHead(tx.date)}</h4><div class="list">`;
     }
     const subs = [tx.rentPaymentId?'租務':'', tx.recurringId?'每月固定':'', payStr, tx.note].filter(Boolean).join(' · ');
-    html += `<div class="tx-row ${catClass}">
-      <i class="rb"></i>
+    html += `<div class="tx-row ${catClass}"${catStyleAttr(tx.cat)}>
+      ${catIconHtml(tx)}
       <div class="tx-desc" onclick="editTx(${ri})">
         <div class="tx-desc-main">${escH(displayDesc||displayLabel)}</div>
-        <div class="tx-desc-sub"><span class="tx-badge ${catClass}">${escH(displayLabel)}</span><span style="overflow:hidden;text-overflow:ellipsis;">${escH(subs)}</span></div>
+        <div class="tx-desc-sub"><span class="tx-badge ${catClass}"${catStyleAttr(tx.cat)}>${escH(displayLabel)}${tx.sub ? ' · ' + escH(tx.sub) : ''}</span><span style="overflow:hidden;text-overflow:ellipsis;">${escH(subs)}</span></div>
       </div>
       <div class="tx-ra">${amtStr}<span class="tx-curr${curr==='AUD'?' au':''}">${currLabel}</span></div>
       <button class="tx-del" onclick="delTx(${ri})" aria-label="刪除">×</button>
@@ -1949,10 +1986,12 @@ function renderPieCharts(){
   if(expLabels.length){
     _charts.catExp = new Chart(document.getElementById('chart-cat-exp'),{
       type:'doughnut',
-      data:{labels:expLabels,datasets:[{data:expVals,backgroundColor:colors,borderWidth:0}]},
-      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#9a97b0',font:{size:10},padding:8}}}}
+      data:{labels:expLabels,datasets:[{data:expVals,backgroundColor:expLabels.map(l=>catStyleOf(l).color),borderWidth:0}]},
+      options:{responsive:true,onClick:(e,els)=>{ if(els && els.length) toggleCatOpen(expLabels[els[0].index]); },plugins:{legend:{position:'bottom',labels:{color:'#9a97b0',font:{size:10},padding:8}}}}
     });
   }
+
+  renderCatBreakdown(txs.filter(t=>REAL_EXP.has(t.cat)), expLabels, expVals, curr);
 
   // 收入圓餅（按 incomeCat 細分）
   const incData={};
@@ -1979,7 +2018,7 @@ function renderPieCharts(){
 // ════════════════════════════════════════
 function renderSettings(){
   const s = DB.settings;
-  ['tw-banks','au-banks','ccs','cats'].forEach(key=>{
+  ['tw-banks','au-banks','ccs'].forEach(key=>{
     const arr = key==='tw-banks'?s.twBanks:key==='au-banks'?s.auBanks:key==='ccs'?s.creditCards:s.categories;
     document.getElementById('set-'+key).innerHTML = arr.map((v,i)=>`
       <div class="setting-row">
@@ -1988,6 +2027,8 @@ function renderSettings(){
         <button class="setting-del" onclick="removeItem('${key}',${i})" aria-label="刪除">×</button>
       </div>`).join('');
   });
+
+  renderCatSettings();
 
   // Init balances
   document.getElementById('set-tw-init').innerHTML =
@@ -2055,6 +2096,7 @@ function renameItem(key, idx){
     DB.rent.contracts.forEach(c=>{ if(c.cat===old) c.cat = nv; });
     DB.rent.payments.forEach(p=>{ if(p.cat===old) p.cat = nv; });
     DB.recurring.forEach(r=>{ if(r.category===old) r.category = nv; });
+    moveCatMeta(old, nv);
   } else {
     DB.transactions.forEach(t=>{ ['payMethod','intFrom','intTo','ccFrom','ccCard','fxFrom','fxTo'].forEach(f=>{ if(t[f]===old){ t[f] = nv; n++; } }); });
     (DB.deposits||[]).forEach(d=>{ if(d.payMethod===old) d.payMethod = nv; });
@@ -2112,7 +2154,7 @@ function fixDates(idxs){
 function addTWBank(){ const v=document.getElementById('new-tw-bank').value.trim(); if(!v) return; DB.settings.twBanks.push(v); document.getElementById('new-tw-bank').value=''; save(); renderAll(); }
 function addAUBank(){ const v=document.getElementById('new-au-bank').value.trim(); if(!v) return; DB.settings.auBanks.push(v); document.getElementById('new-au-bank').value=''; save(); renderAll(); }
 function addCC(){ const v=document.getElementById('new-cc').value.trim(); if(!v) return; DB.settings.creditCards.push(v); DB.settings.initCC[v]=0; document.getElementById('new-cc').value=''; save(); renderAll(); }
-function addCat(){ const v=document.getElementById('new-cat').value.trim(); if(!v) return; DB.settings.categories.push(v); document.getElementById('new-cat').value=''; save(); renderAll(); }
+function addCat(){ const v=document.getElementById('new-cat').value.trim(); if(!v) return; if(!catNameOk(v)) return; DB.settings.categories.push(v); ensureCatStyle(v); document.getElementById('new-cat').value=''; save(); renderAll(); }
 
 function saveInitBalances(){
   const s = DB.settings;
@@ -2335,7 +2377,7 @@ function saveTx(){
     if(!who){ alert('請填是哪位朋友先付'); return; }
     const pid = 'P' + Date.now() + Math.floor(Math.random()*1000);
     // 支出算在今天，但不扣任何帳戶（payMethod 不是任何帳戶名稱）
-    DB.transactions.push({cat:fcat,date,ts:Date.now(),currency:curr,item:fitem,note,amount:amt,payMethod:'朋友先付',friend:who,payableId:pid});
+    DB.transactions.push({cat:fcat,date,ts:Date.now(),currency:curr,item:fitem,note,amount:amt,payMethod:'朋友先付',friend:who,payableId:pid,sub:curSub()||undefined});
     if(!Array.isArray(DB.payables)) DB.payables = [];
     DB.payables.push({id:pid,date,who,amount:amt,currency:curr,desc:fitem||note,settled:false});
     save(); closeModal('modal-tx'); renderAll(); return;
@@ -2366,7 +2408,7 @@ function saveTx(){
 
   // 主帳（我的份額）
   if(mine>0){
-    DB.transactions.push({cat,date,ts:_ts,currency:curr,item,note,amount:mine,payMethod:pay});
+    DB.transactions.push({cat,date,ts:_ts,currency:curr,item,note,amount:mine,payMethod:pay,sub:curSub()||undefined});
   }
 
   // 代墊
@@ -4212,6 +4254,7 @@ function editTx(i){
     document.getElementById('tx-stat').checked = stat;
     if(stat) setVal('tx-cat', tx.cat);
     onTxStatChange();
+    renderSubChips(tx.sub || '');   // 13.10：小類
     if(kind==='friend') setVal('tx-friend', tx.friend || (L.pay && L.pay.who) || '');
     if(kind==='adv') setVal('tx-friend', (L.adv && L.adv.who) || (tx.item||'').replace('代墊-',''));
   }
@@ -4296,6 +4339,7 @@ function saveEdit(){
     if(!amt){ alert('請填金額'); return; }
     if(!who){ alert('請填是哪位朋友先付'); return; }
     Object.assign(rec, { amount: amt, friend: who, cat: catFromForm(), item: v('tx-item') });
+    setRecSub(rec);
     if(L.pay){ Object.assign(L.pay, { amount: amt, who, date, currency: curr, desc: rec.item || note }); }
   } else {
     // 從帳戶付 / 收的：一般支出、代墊、押金、押金退回、代墊回款
@@ -4304,7 +4348,7 @@ function saveEdit(){
     const amt = ctx.lockAmt ? Number(old.amount) : n('tx-amt');
     if(!amt){ alert('請填金額'); return; }
     rec.amount = amt; rec.payMethod = acct;
-    if(k==='normal'){ rec.cat = catFromForm(); rec.item = v('tx-item'); }
+    if(k==='normal'){ rec.cat = catFromForm(); rec.item = v('tx-item'); setRecSub(rec); }
     else if(k==='adv'){
       const who = ctx.settled ? ((L.adv && L.adv.who) || (old.item||'').replace('代墊-','')) : v('tx-friend').trim();
       if(!who){ alert('請填代墊對象'); return; }
@@ -4416,6 +4460,232 @@ async function refreshFromCloud(){
   showSyncStatus('已同步 ✓','ok');
   renderAll();
 }
+// ════════════════════════════════════════
+// Pro13.10：類別的圖案、顏色、小類
+// ════════════════════════════════════════
+// 資料：DB.settings.catStyle = { 類別: {icon, color} }、DB.settings.subcats = { 類別: [小類…] }、明細 tx.sub（選填）
+// 計算（餘額、支出統計）只看大類 tx.cat，小類只是標籤，不影響任何金額。
+
+const CAT_ICONS = {
+  food:   'M7 3v8M5 3v4a2 2 0 0 0 4 0V3M7 11v10M16 3c-2 1.5-2 6 0 8v10',
+  coffee: 'M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h2a2 2 0 0 1 0 4h-2M8 3v2M12 3v2',
+  car:    'M4 16v-4l2-5h12l2 5v4zM4 16v2M20 16v2M8.7 13a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0M17.7 13a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0',
+  bus:    'M5 4h14v13H5zM5 11h14M8 17v3M16 17v3M9.2 14a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0M17.2 14a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0',
+  fuel:   'M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M4 21h12M5 10h10M15 8l3 3v6a1.5 1.5 0 0 0 3 0V9l-3-3',
+  plane:  'M3 12l18-8-7 17-3-7z',
+  home:   'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+  bag:    'M6 8h12l-1 12H7zM9 8a3 3 0 0 1 6 0',
+  shirt:  'M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3c0 2-2 3-4 3S8 5 8 3z',
+  star:   'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z',
+  med:    'M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z',
+  heart:  'M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z',
+  receipt:'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',
+  phone:  'M8 3h8v18H8zM11 18h2',
+  book:   'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5',
+  gift:   'M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-1-3-5-3-5-1s5 1 5 1zm0 0c1-3 5-3 5-1s-5 1-5 1z',
+  paw:    'M12 13c-3 0-5 3-5 5s2 2 5 2 5 0 5-2-2-5-5-5zM7.2 10a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0M19.2 10a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0M10.7 6a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0M15.7 6a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0',
+  gym:    'M6 8v8M3 10v4M18 8v8M21 10v4M6 12h12',
+  tool:   'M15 4a4 4 0 0 0-3 6l-8 8 2 2 8-8a4 4 0 0 0 6-3l-3 1-2-2 1-3z',
+  alert:  'M12 3 2 20h20zM12 9v5M12 17h.01',
+  dots:   'M7.2 12a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0M13.2 12a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0M19.2 12a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0',
+  // 系統類別用
+  in:     'M12 4v14M6 12l6 6 6-6',
+  people: 'M12.5 8a3.5 3.5 0 1 1-7 0 3.5 3.5 0 1 1 7 0M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 20a6.5 6.5 0 0 0-3-5.5',
+  swap:   'M7 7h13l-4-4M17 17H4l4 4',
+  card:   'M3 6h18v12H3zM3 10h18',
+  lock:   'M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3',
+  minus:  'M5 12h14',
+};
+const CAT_PICK_ICONS = ['food','coffee','car','bus','fuel','plane','home','bag','shirt','star','med','heart','receipt','phone','book','gift','paw','gym','tool','alert','dots'];
+const CAT_COLORS = ['#4ade80','#5ec8f7','#a493ff','#fb923c','#f87171','#facc15','#9a97b0','#f472b6','#2dd4bf','#818cf8','#a3e635','#e879f9'];
+// 預設：沿用以前「照名字」的顏色，配上圖案
+const CAT_DEFAULTS = {
+  '飲食':{icon:'food',color:'#4ade80'}, '食物':{icon:'food',color:'#4ade80'}, '交通':{icon:'car',color:'#5ec8f7'},
+  '購物':{icon:'bag',color:'#a493ff'}, '服飾':{icon:'shirt',color:'#a493ff'}, '娛樂':{icon:'star',color:'#fb923c'},
+  '醫療':{icon:'med',color:'#f87171'}, '居住':{icon:'home',color:'#facc15'}, '房租':{icon:'home',color:'#facc15'},
+  '雜支':{icon:'dots',color:'#9a97b0'}, '其他':{icon:'dots',color:'#9a97b0'},
+};
+// 系統類別（不能改圖案顏色）
+const CAT_SYS = {
+  '收入':{icon:'in',color:'#4ade80'}, '代墊回款':{icon:'in',color:'#4ade80'}, '押金退回':{icon:'lock',color:'#4ade80'},
+  '代墊款':{icon:'people',color:'#facc15'}, '還款給朋友':{icon:'people',color:'#fb923c'}, '內部轉帳':{icon:'swap',color:'#a493ff'},
+  '換匯':{icon:'swap',color:'#5ec8f7'}, '信用卡費':{icon:'card',color:'#f87171'}, '不計統計':{icon:'minus',color:'#5f5c76'},
+  '押金':{icon:'lock',color:'#fb923c'},
+};
+
+function catSvg(icon, size){ const d = CAT_ICONS[icon] || CAT_ICONS.dots; return `<svg class="i" viewBox="0 0 24 24" style="width:${size||18}px;height:${size||18}px"><path d="${d}"/></svg>`; }
+function catMeta(){ const s = DB.settings; if(!s.catStyle || typeof s.catStyle!=='object') s.catStyle = {}; if(!s.subcats || typeof s.subcats!=='object') s.subcats = {}; return s; }
+// 一個類別的圖案和顏色：使用者設定 > 系統類別 > 預設 > 依順序配色
+function catStyleOf(name){
+  const s = DB.settings || {};
+  if(CAT_SYS[name]) return CAT_SYS[name];
+  const own = s.catStyle && s.catStyle[name];
+  const def = CAT_DEFAULTS[name];
+  const i = (s.categories||[]).indexOf(name);
+  return {
+    icon: (own && CAT_ICONS[own.icon] ? own.icon : null) || (def && def.icon) || 'dots',
+    color: (own && own.color) || (def && def.color) || (i >= 0 ? CAT_COLORS[i % CAT_COLORS.length] : '#5f5c76'),
+  };
+}
+function catStyleAttr(name){ return ` style="--c1:${catStyleOf(name).color}"`; }
+function subsOf(name){ const s = DB.settings || {}; const a = s.subcats && s.subcats[name]; return Array.isArray(a) ? a : []; }
+// 新增類別時，先配一個還沒被用過的顏色
+function ensureCatStyle(name){
+  const s = catMeta();
+  if(s.catStyle[name]) return;
+  const used = new Set((s.categories||[]).filter(c=>c!==name).map(c=>catStyleOf(c).color));
+  const color = CAT_COLORS.find(c=>!used.has(c)) || CAT_COLORS[(s.categories||[]).length % CAT_COLORS.length];
+  s.catStyle[name] = { icon: (CAT_DEFAULTS[name]||{}).icon || 'dots', color };
+}
+// 類別名稱檢查：不能跟系統類別或現有類別同名（同名會讓計算出錯，例如支出被當成收入）
+function catNameOk(v, except){
+  if(RESERVED_CATS.includes(v)){ alert(`「${v}」是系統用的名稱，用它當支出類別會讓計算出錯，請換一個`); return false; }
+  if(DB.settings.categories.some(c=>c===v && c!==except)){ alert(`已經有「${v}」這個類別了`); return false; }
+  return true;
+}
+// 大類改名：圖案顏色、小類一起搬過去
+function moveCatMeta(oldN, newN){
+  const s = catMeta();
+  if(s.catStyle[oldN]){ s.catStyle[newN] = s.catStyle[oldN]; delete s.catStyle[oldN]; }
+  else if(CAT_DEFAULTS[oldN] && !s.catStyle[newN]) s.catStyle[newN] = { ...CAT_DEFAULTS[oldN] };
+  if(s.subcats[oldN]){ s.subcats[newN] = s.subcats[oldN]; delete s.subcats[oldN]; }
+}
+
+// ── 明細列：左邊圖案 ──
+function catIconHtml(tx){
+  const st = catStyleOf(tx.cat);
+  return `<span class="cat-ic"${catStyleAttr(tx.cat)}>${catSvg(st.icon, 17)}</span>`;
+}
+
+// ── 記一筆：小類（選填）──
+let _subSel = '';
+function curMainCat(){
+  const grp = document.getElementById('tx-cat-grp');
+  if(!grp || grp.style.display==='none' || !document.getElementById('tx-stat').checked) return '';
+  return document.getElementById('tx-cat').value || '';
+}
+function renderSubChips(preset){
+  if(preset !== undefined) _subSel = preset || '';
+  const grp = document.getElementById('tx-sub-grp'); if(!grp) return;
+  const main = curMainCat(), subs = main ? subsOf(main) : [];
+  if(!subs.includes(_subSel)) _subSel = '';
+  if(!subs.length){ grp.style.display = 'none'; return; }
+  grp.style.display = '';
+  const color = catStyleOf(main).color;
+  document.getElementById('tx-sub').innerHTML = ['', ...subs].map(x=>
+    `<button type="button" class="sub-chip${x===_subSel?' on':''}" style="--c1:${color}" onclick="pickSub(this.dataset.v)" data-v="${escH(x)}">${x ? escH(x) : '不分'}</button>`).join('');
+}
+function pickSub(v){ _subSel = v || ''; renderSubChips(); }
+function curSub(){ const main = curMainCat(); return main && _subSel && subsOf(main).includes(_subSel) ? _subSel : ''; }
+// 編輯存檔：小類跟著表單；換了大類或選「不分」就拿掉
+function setRecSub(rec){ const sb = curSub(); if(sb) rec.sub = sb; else delete rec.sub; }
+
+// ── 設定頁：類別列表 ──
+function renderCatSettings(){
+  const s = catMeta(), el = document.getElementById('set-cats'); if(!el) return;
+  el.innerHTML = s.categories.map((c,i)=>{
+    const st = catStyleOf(c), subs = subsOf(c);
+    return `<div class="setting-row cat-row">
+      <button class="cat-ic big" style="--c1:${st.color}" onclick="openCatEditor(${i})" aria-label="改圖案和顏色">${catSvg(st.icon, 19)}</button>
+      <div class="cat-name" onclick="openCatEditor(${i})"><b>${escH(c)}</b><small>${subs.length ? subs.map(escH).join('、') : '點這裡設定圖案、顏色、小類'}</small></div>
+      <button class="setting-del" onclick="renameItem('cats',${i})" aria-label="改名" style="font-size:13px;">✎</button>
+      <button class="setting-del" onclick="removeItem('cats',${i})" aria-label="刪除">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ── 類別編輯視窗：圖案、顏色、小類 ──
+let _catEdit = null;
+function openCatEditor(i){
+  _catEdit = DB.settings.categories[i]; if(_catEdit==null) return;
+  let m = document.getElementById('modal-cat');
+  if(!m){
+    m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'modal-cat';
+    m.innerHTML = '<div class="modal"><div class="modal-title" id="cat-ed-title"></div><div id="cat-ed-body"></div>' +
+      '<div class="modal-footer"><button class="btn btn-primary" style="flex:1" onclick="closeModal(\'modal-cat\')">完成</button></div></div>';
+    m.addEventListener('click', e=>{ if(e.target===m) closeModal('modal-cat'); });
+    document.body.appendChild(m);
+  }
+  renderCatEditor();
+  m.classList.add('open');
+}
+function renderCatEditor(){
+  const c = _catEdit, st = catStyleOf(c), subs = subsOf(c);
+  document.getElementById('cat-ed-title').innerHTML = `<span class="cat-ic big" style="--c1:${st.color};vertical-align:middle;margin-right:8px">${catSvg(st.icon, 19)}</span>${escH(c)}`;
+  document.getElementById('cat-ed-body').innerHTML =
+    `<div class="fl" style="margin:4px 0 8px">圖案</div>
+     <div class="cat-grid">${CAT_PICK_ICONS.map(k=>`<button type="button" class="cat-pick${k===st.icon?' on':''}" style="--c1:${st.color}" onclick="setCatStyle('icon','${k}')" aria-label="${k}">${catSvg(k, 20)}</button>`).join('')}</div>
+     <div class="fl" style="margin:16px 0 8px">顏色</div>
+     <div class="cat-grid">${CAT_COLORS.map(k=>`<button type="button" class="cat-sw${k===st.color?' on':''}" style="background:${k}" onclick="setCatStyle('color','${k}')" aria-label="${k}"></button>`).join('')}</div>
+     <div class="fl" style="margin:16px 0 8px">小類（選填，記帳時可以選，不選也可以）</div>
+     <div>${subs.length ? subs.map((x,j)=>`<div class="setting-row"><div class="setting-tag">${escH(x)}</div>
+        <button class="setting-del" onclick="renameSub(${j})" aria-label="改名" style="font-size:13px;">✎</button>
+        <button class="setting-del" onclick="removeSub(${j})" aria-label="刪除">×</button></div>`).join('') : '<div class="text-muted" style="margin-bottom:6px">還沒有小類</div>'}</div>
+     <div class="add-row"><input id="new-sub" placeholder="新增小類，例：油錢"><button class="btn btn-ghost" onclick="addSub()">新增</button></div>`;
+}
+function setCatStyle(k, v){
+  const s = catMeta(), cur = catStyleOf(_catEdit);
+  s.catStyle[_catEdit] = { icon: cur.icon, color: cur.color, [k]: v };
+  save(); renderAll(); renderCatEditor();
+}
+function addSub(){
+  const v = (document.getElementById('new-sub').value||'').trim(); if(!v) return;
+  const s = catMeta(), list = subsOf(_catEdit).slice();
+  if(list.includes(v)){ alert(`「${_catEdit}」已經有「${v}」了`); return; }
+  list.push(v); s.subcats[_catEdit] = list;
+  save(); renderAll(); renderCatEditor();
+}
+function renameSub(j){
+  const s = catMeta(), list = subsOf(_catEdit).slice(), old = list[j];
+  const nv = (prompt(`把小類「${old}」改名為：`, old)||'').trim();
+  if(!nv || nv===old) return;
+  if(list.includes(nv)){ alert(`「${_catEdit}」已經有「${nv}」了`); return; }
+  list[j] = nv; s.subcats[_catEdit] = list;
+  let n = 0; DB.transactions.forEach(t=>{ if(t.cat===_catEdit && t.sub===old){ t.sub = nv; n++; } });
+  save(); renderAll(); renderCatEditor();
+  if(n) alert(`已改名為「${nv}」，共更新 ${n} 筆記錄`);
+}
+function removeSub(j){
+  const s = catMeta(), list = subsOf(_catEdit).slice(), old = list[j];
+  const used = DB.transactions.filter(t=>t.cat===_catEdit && t.sub===old).length;
+  if(!confirm(used ? `「${old}」有 ${used} 筆記錄。\n\n刪除後這些記錄還是「${_catEdit}」，只是變成不分小類，金額不受影響。\n\n確定要刪除？` : `確定刪除小類「${old}」？`)) return;
+  list.splice(j,1); s.subcats[_catEdit] = list;
+  DB.transactions.forEach(t=>{ if(t.cat===_catEdit && t.sub===old) delete t.sub; });
+  save(); renderAll(); renderCatEditor();
+}
+
+// ── 圖表：支出各類別明細（點一下展開小類）──
+let _catOpen = '';
+function renderCatBreakdown(txs, labels, vals, curr){
+  const el = document.getElementById('cat-breakdown'); if(!el) return;
+  const total = vals.reduce((a,b)=>a+b,0);
+  if(!labels.length){ el.innerHTML = ''; return; }
+  const rows = labels.map((l,i)=>({ l, v: vals[i] })).sort((a,b)=>b.v-a.v);
+  el.innerHTML = rows.map(({l,v})=>{
+    const st = catStyleOf(l), open = _catOpen===l;
+    let subHtml = '';
+    if(open){
+      const bySub = {};
+      txs.filter(t=>t.cat===l).forEach(t=>{ const k = t.sub && subsOf(l).includes(t.sub) ? t.sub : '未分類'; bySub[k] = (bySub[k]||0) + Number(t.amount||0); });
+      subHtml = Object.entries(bySub).sort((a,b)=>b[1]-a[1]).map(([k,x])=>
+        `<div class="cb-sub"><span>${escH(k)}</span><b class="num">${fmt(x,curr)}</b><small>${v ? Math.round(x/v*100) : 0}%</small></div>`).join('');
+    }
+    return `<div class="cb-row${open?' open':''}" style="--c1:${st.color}" onclick="toggleCatOpen(this.dataset.c)" data-c="${escH(l)}">
+      <span class="cat-ic">${catSvg(st.icon, 15)}</span><span class="cb-name">${escH(l)}</span>
+      <b class="num">${fmt(v,curr)}</b><small>${total ? Math.round(v/total*100) : 0}%</small><span class="cb-arrow">${subsOf(l).length || open ? (open?'▾':'▸') : ''}</span></div>${subHtml}`;
+  }).join('');
+}
+function toggleCatOpen(c){ _catOpen = _catOpen===c ? '' : c; try{ renderPieCharts(); }catch(e){} }
+
+// 打開「記一筆」、切換付款方式、勾選「計入支出統計」、換類別時，更新小類按鈕
+(function(){
+  const wrap = fn => function(){ const r = fn.apply(this, arguments); try{ renderSubChips(); }catch(e){} return r; };
+  if(typeof openTxModal==='function'){ const o = openTxModal; openTxModal = function(){ const r = o.apply(this, arguments); try{ renderSubChips(''); }catch(e){} return r; }; }
+  if(typeof onTxPayChange==='function') onTxPayChange = wrap(onTxPayChange);
+  if(typeof onTxStatChange==='function') onTxStatChange = wrap(onTxStatChange);
+  const sel = document.getElementById('tx-cat');
+  if(sel) sel.addEventListener('change', ()=>renderSubChips(''));
+})();
 
 // ════════════════════════════════════════
 // INIT
