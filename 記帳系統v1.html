@@ -228,7 +228,7 @@ input[type=checkbox]{-webkit-appearance:auto;appearance:auto;width:18px;height:1
 
 /* ---------- 密碼鎖 ---------- */
 body.locked>*:not(#pin-lock){visibility:hidden!important}
-body.locked{overflow:hidden}
+
 #pin-lock{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:var(--st) 0 var(--sb);touch-action:manipulation;overscroll-behavior:none;
   background:radial-gradient(800px 480px at 50% -10%,rgba(164,147,255,.16),transparent 65%),var(--bg);transition:opacity .35s ease}
@@ -552,6 +552,10 @@ button,.bnav,.tabs,.fab,.pin-pad,.seg,.chip,.st-k,.tx-badge{-webkit-user-select:
    只在還是半透明（頂端安全區 > 0，edit.js 加 sb-blur）時才移；重新加入主畫面變實心後就不移 */
 html.sb-blur .top{padding-top:calc(38px + var(--st))}
 html.sb-blur .page{padding-top:calc(104px + var(--st))}
+/* 13.8：每一頁至少能捲 1px，iPhone 主畫面模式才會給完整高度（同送貨 App v5.12） */
+body{min-height:calc(100vh + 1px)}
+/* 13.8：「記一筆」光暈置中（原本往下偏 14px，看起來歪） */
+.fab{box-shadow:0 0 24px -4px rgba(164,147,255,.65),0 0 0 1px rgba(255,255,255,.12) inset}
 /* 隱藏的提示框、彈出背景：完全移除，不是只變透明（之前會殘留在標題上方） */
 .rp-toast{visibility:hidden;transition:opacity .25s,transform .25s,visibility 0s linear .25s}
 .rp-toast.show{visibility:visible;transition:opacity .25s,transform .25s,visibility 0s}
@@ -580,7 +584,7 @@ html.sb-blur .page{padding-top:calc(104px + var(--st))}
 <div id="pin-lock">
   <div class="pin-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.6 20.2 7.3v9.4L12 21.4 3.8 16.7V7.3z"/><path d="M14.4 9.2c-.5-.8-1.4-1.2-2.4-1.2-1.4 0-2.4.7-2.4 1.8 0 2.5 4.9 1.4 4.9 4 0 1.1-1 1.9-2.5 1.9-1.1 0-2-.4-2.6-1.3M12 6.6v1.4M12 15.7v1.5"/></svg></div>
   <div class="pin-title">Expense Manager</div>
-  <div class="pin-subtitle">v.Pro13.7 · TWD / AUD</div>
+  <div class="pin-subtitle">v.Pro13.8 · TWD / AUD</div>
   <div class="pin-label" id="pin-label">請輸入密碼</div>
   <div class="pin-dots" id="pin-dots">
     <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -607,7 +611,7 @@ html.sb-blur .page{padding-top:calc(104px + var(--st))}
 <header class="top">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.6 20.2 7.3v9.4L12 21.4 3.8 16.7V7.3z"/><path d="M14.4 9.2c-.5-.8-1.4-1.2-2.4-1.2-1.4 0-2.4.7-2.4 1.8 0 2.5 4.9 1.4 4.9 4 0 1.1-1 1.9-2.5 1.9-1.1 0-2-.4-2.6-1.3M12 6.6v1.4M12 15.7v1.5"/></svg></div>
-    <div><b>Expense Manager</b><small>v.Pro13.7 · TWD / AUD</small></div>
+    <div><b>Expense Manager</b><small>v.Pro13.8 · TWD / AUD</small></div>
   </div>
   <nav class="tabs">
     <button data-page="overview" class="on" onclick="showPage('overview')"><svg class="i" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>總覽</button>
