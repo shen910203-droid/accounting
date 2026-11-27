@@ -552,10 +552,10 @@ button,.bnav,.tabs,.fab,.pin-pad,.seg,.chip,.st-k,.tx-badge{-webkit-user-select:
    只在還是半透明（頂端安全區 > 0，edit.js 加 sb-blur）時才移；重新加入主畫面變實心後就不移 */
 html.sb-blur .top{padding-top:calc(38px + var(--st))}
 html.sb-blur .page{padding-top:calc(104px + var(--st))}
-/* 13.9：實心狀態列（重新加入主畫面後）那一條是 iPhone 畫的純黑，網頁畫不到。
-   密碼畫面、標題列最上面改成純黑，和狀態列接成一整片，看起來滿版 */
-html.standalone:not(.sb-blur) .top{background:#000}
-html.standalone:not(.sb-blur) #pin-lock{background:linear-gradient(#000 0,rgba(0,0,0,0) 120px),radial-gradient(800px 480px at 50% 12%,rgba(164,147,255,.14),transparent 65%),var(--bg)}
+/* 13.9：實心狀態列（重新加入主畫面後）那一條由 iPhone 畫，網頁畫不到；顏色跟著 theme-color（#0b0b12 = --bg）。
+   Aiden 的 iPhone 截圖量到：狀態列 #0b0b12 到 62pt，密碼畫面頂端卻是紫色光暈 #181727 → 看得到接縫、像上面空一塊。
+   密碼畫面頂端改成從 --bg 開始、再漸漸出現光暈，和狀態列接成一整片（標題列本來就是 #0b0b12，不用改） */
+html.standalone:not(.sb-blur) #pin-lock{background:linear-gradient(var(--bg) 0,rgba(11,11,18,0) 140px),radial-gradient(800px 480px at 50% 12%,rgba(164,147,255,.14),transparent 65%),var(--bg)}
 /* 13.8：「記一筆」光暈置中（原本往下偏 14px，看起來歪） */
 .fab{box-shadow:0 0 24px -4px rgba(164,147,255,.65),0 0 0 1px rgba(255,255,255,.12) inset}
 /* 隱藏的提示框、彈出背景：完全移除，不是只變透明（之前會殘留在標題上方） */
