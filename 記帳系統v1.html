@@ -3105,6 +3105,14 @@ const Rent = (function () {
     if (type === 'car') return pick(['交通', '租車', '車']) || cats[0] || '不計統計';
     return pick(['雜支', '其他']) || cats[0] || '不計統計';
   }
+  // 13.10：小類（選填）下拉選單；這個大類沒有小類就不顯示
+  function subsFor(cat) { return typeof subsOf === 'function' ? subsOf(cat) : []; }
+  function subField(cat, sel, id) {
+    var subs = subsFor(cat); if (!subs.length) return '';
+    return '<div class="fld"><label>小類（選填）</label><select class="in" id="' + id + '"><option value="">不分</option>' +
+      subs.map(function (x) { return '<option' + (x === sel ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div>';
+  }
+  function validSub(cat, sub) { return sub && subsFor(cat).indexOf(sub) >= 0 ? sub : ''; }
   function catOptions(sel) {
     var cats = (DB.settings.categories || []).slice();
     if (sel && cats.indexOf(sel) < 0 && sel !== '不計統計') cats.push(sel);
@@ -3137,7 +3145,10 @@ const Rent = (function () {
       if (p.kind === 'rent' || p.kind === 'other') {
         if (!(a > 0)) return;
         var per = p.kind === 'rent' && p.from && p.to ? ' ' + md(d2n(p.from)) + '–' + md(d2n(p.to)) : '';
-        DB.transactions.push(Object.assign(base, { cat: p.cat || c.cat || defaultCat(c.type), ts: ts(p, 'main'), item: nm + ' ' + KINDS[p.kind] + per, amount: a, payMethod: p.acct }));
+        var pcat = p.cat || c.cat || defaultCat(c.type), psub = validSub(pcat, p.cat ? p.sub : (p.sub || c.sub));
+        var rec = { cat: pcat, ts: ts(p, 'main'), item: nm + ' ' + KINDS[p.kind] + per, amount: a, payMethod: p.acct };
+        if (psub) rec.sub = psub;
+        DB.transactions.push(Object.assign(base, rec));
       } else if (p.kind === 'bond') {
         if (!(a > 0)) return;
         DB.transactions.push(Object.assign(base, { cat: '押金', ts: ts(p, 'main'), item: nm + ' 押金', amount: a, payMethod: p.acct }));
@@ -3147,8 +3158,11 @@ const Rent = (function () {
     });
     var cut = rround2(bondPaid - refunded);
     if (lastRefund && lastRefund.acct && cut > 0) {
-      DB.transactions.push({ cat: c.cat || defaultCat(c.type), date: lastRefund.paidDate, ts: ts(lastRefund, 'deduct'), currency: 'AUD', item: nm + ' 押金被扣',
-        note: '押金 ' + money(bondPaid) + '，退回 ' + money(refunded), amount: cut, payMethod: '押金扣除', rentPaymentId: lastRefund.id, rentContractId: cid, rentRole: 'deduct' });
+      var dcat = c.cat || defaultCat(c.type), dsub = validSub(dcat, c.sub);
+      var drec = { cat: dcat, date: lastRefund.paidDate, ts: ts(lastRefund, 'deduct'), currency: 'AUD', item: nm + ' 押金被扣',
+        note: '押金 ' + money(bondPaid) + '，退回 ' + money(refunded), amount: cut, payMethod: '押金扣除', rentPaymentId: lastRefund.id, rentContractId: cid, rentRole: 'deduct' };
+      if (dsub) drec.sub = dsub;
+      DB.transactions.push(drec);
     }
   }
 
@@ -3675,6 +3689,11 @@ const Rent = (function () {
       if (f.kind === 'rent' || f.kind === 'other') h += '<div class="fld"><label>記帳類別</label><select class="in" id="pf-cat">' + catOptions(f.cat || c.cat || defaultCat(c.type)) + '</select></div>';
       else h += '<div class="fld"><label>記帳類別</label><div class="in" style="display:flex;align-items:center;color:var(--mut)">' + (f.kind === 'bond' ? '押金（不計統計）' : '押金退回') + '</div></div>';
       h += '</div>';
+      if (f.kind === 'rent' || f.kind === 'other') {
+        var pcat = f.cat || c.cat || defaultCat(c.type);
+        var psub = f.sub != null ? f.sub : (pcat === (c.cat || defaultCat(c.type)) ? (c.sub || '') : '');
+        h += subField(pcat, psub, 'pf-sub');
+      }
       if (f.kind === 'refund') h += '<div class="hint" style="margin:-6px 2px 12px">押金被扣的部分會在明細記一筆「押金被扣」支出（只計入統計，不會再扣一次帳戶）。</div>';
       h += '<div class="fld"><label>方式</label><div class="chips">' + METHODS.map(function (m) { return '<button type="button" class="chip ' + (f.method === m ? 'on' : '') + '" data-m="' + m + '">' + m + '</button>'; }).join('') + '</div></div>';
       h += '<div class="fld"><label>備註（選填）</label><input class="in" id="pf-note" value="' + esc(f.note) + '" placeholder="例：含水電、轉帳末四碼"></div>';
@@ -3710,9 +3729,11 @@ const Rent = (function () {
     function grabSel(sh) {
       var ae = $('#pf-acct', sh); if (ae) f.acct = ae.value;
       var ce = $('#pf-cat', sh); if (ce) f.cat = ce.value;
+      var se = $('#pf-sub', sh); if (se) f.sub = se.value; else if (ce) f.sub = '';
     }
     function bind(sh) {
-      $$('[data-c]', sh).forEach(function (b) { b.onclick = function () { grabSel(sh); f.contractId = b.dataset.c; f.cat = ''; if (!editing) prefill(); draw(sh); }; });
+      $$('[data-c]', sh).forEach(function (b) { b.onclick = function () { grabSel(sh); f.contractId = b.dataset.c; f.cat = ''; f.sub = null; if (!editing) prefill(); draw(sh); }; });
+      var pce = $('#pf-cat', sh); if (pce) pce.onchange = function () { grabSel(sh); f.sub = ''; draw(sh); };
       $$('[data-k]', sh).forEach(function (b) {
         b.onclick = function () {
           if (f.kind === b.dataset.k) return;
@@ -3769,7 +3790,8 @@ const Rent = (function () {
       var item = {
         id: f.id || uid('p'), contractId: f.contractId, kind: f.kind, amount: String(round2(amt)), paidDate: f.paidDate,
         from: f.kind === 'rent' ? f.from : '', to: f.kind === 'rent' ? f.to : '', method: f.method || '', note: String(f.note || '').trim(),
-        acct: f.acct || '', cat: (f.kind === 'rent' || f.kind === 'other') ? (f.cat || '') : ''
+        acct: f.acct || '', cat: (f.kind === 'rent' || f.kind === 'other') ? (f.cat || '') : '',
+        sub: (f.kind === 'rent' || f.kind === 'other') ? validSub(f.cat || (getC(f.contractId) || {}).cat || '', f.sub || '') : ''
       };
       busyBtn(btn, true);
       commit('savePayment', { item: item }).then(function () { closeSheet(); toast((editing ? '已更新 ' : '已記錄 ') + money(item.amount) + (item.acct ? '，明細已同步' : '')); });
@@ -3805,17 +3827,20 @@ const Rent = (function () {
       h += '<div class="fld"><label>什麼時候繳</label><div class="seg"><button type="button" data-md="pre" class="' + (f.mode !== 'post' ? 'on' : '') + '">先繳（住之前）</button><button type="button" data-md="post" class="' + (f.mode === 'post' ? 'on' : '') + '">後繳（住完再繳）</button></div>' +
         '<div class="hint">' + (f.mode === 'post' ? '例：10/18–10/24 這期，10/25 提醒你繳' : '例：已繳到 10/17，10/18 提醒你繳下一期') + '</div></div>';
       h += '<div class="fld"><label>記帳類別（繳租金時預設用這個）</label><select class="in" id="cf-cat">' + catOptions(f.cat || defaultCat(f.type)) + '</select></div>';
+      h += subField(f.cat || defaultCat(f.type), f.sub || '', 'cf-sub');
       h += '<div class="fld"><label>備註（選填）</label><textarea class="in" id="cf-note" placeholder="地址、聯絡方式、合約重點…">' + esc(f.note) + '</textarea></div>';
       h += '<div class="ferr"></div><div class="acts">' + (editing ? '<button type="button" class="btn dng" id="cf-del" style="flex:0 0 auto;padding:0 16px">刪除</button>' : '') + '<button type="button" class="btn pri" id="cf-save">' + ic('check') + '儲存</button></div>';
       sh.innerHTML = h; bind(sh);
     }
     function grab(sh) {
-      ['name', 'party', 'start', 'rate', 'bond', 'note', 'cat'].forEach(function (k) { var el = $('#cf-' + k, sh); if (el) f[k] = el.value; });
+      ['name', 'party', 'start', 'rate', 'bond', 'note', 'cat', 'sub'].forEach(function (k) { var el = $('#cf-' + k, sh); if (el) f[k] = el.value; });
+      if (!$('#cf-sub', sh)) f.sub = '';
       var e = $('#cf-end', sh); if (e && !noEnd) f.end = e.value;
       var cy = $('#cf-cycle', sh); if (cy) f.cycle = cy.value;
     }
     function bind(sh) {
-      $$('[data-t]', sh).forEach(function (b) { b.onclick = function () { grab(sh); var wasDef = f.cat === defaultCat(f.type); f.type = b.dataset.t; if (wasDef) f.cat = defaultCat(f.type); draw(sh); }; });
+      $$('[data-t]', sh).forEach(function (b) { b.onclick = function () { grab(sh); var wasDef = f.cat === defaultCat(f.type); f.type = b.dataset.t; if (wasDef) { f.cat = defaultCat(f.type); f.sub = ''; } draw(sh); }; });
+      var cce = $('#cf-cat', sh); if (cce) cce.onchange = function () { grab(sh); f.sub = ''; draw(sh); };
       $$('[data-cy]', sh).forEach(function (b) { b.onclick = function () { grab(sh); f.cycle = b.dataset.cy === 'x' ? (f.cycle === '7' || f.cycle === '14' ? '30' : f.cycle) : b.dataset.cy; draw(sh); }; });
       $$('[data-md]', sh).forEach(function (b) { b.onclick = function () { grab(sh); f.mode = b.dataset.md; draw(sh); }; });
       $('#cf-noend', sh).onchange = function () { grab(sh); noEnd = this.checked; if (noEnd) f.end = ''; draw(sh); };
@@ -3840,7 +3865,7 @@ const Rent = (function () {
       var item = {
         id: f.id || uid('c'), type: f.type, name: String(f.name).trim(), party: String(f.party).trim(), start: f.start, end: noEnd ? '' : f.end,
         rate: String(round2(num(f.rate))), cycle: String(cy), mode: f.mode === 'post' ? 'post' : 'pre', bond: String(round2(num(f.bond))), note: String(f.note || '').trim(),
-        cat: f.cat || defaultCat(f.type)
+        cat: f.cat || defaultCat(f.type), sub: validSub(f.cat || defaultCat(f.type), f.sub || '')
       };
       busyBtn(btn, true);
       commit('saveContract', { item: item }).then(function () { closeSheet(); toast(editing ? '租約已更新' : '已新增租約'); });
@@ -4642,6 +4667,7 @@ function renameSub(j){
   if(list.includes(nv)){ alert(`「${_catEdit}」已經有「${nv}」了`); return; }
   list[j] = nv; s.subcats[_catEdit] = list;
   let n = 0; DB.transactions.forEach(t=>{ if(t.cat===_catEdit && t.sub===old){ t.sub = nv; n++; } });
+  rentSubsReplace(_catEdit, old, nv);
   save(); renderAll(); renderCatEditor();
   if(n) alert(`已改名為「${nv}」，共更新 ${n} 筆記錄`);
 }
@@ -4651,7 +4677,17 @@ function removeSub(j){
   if(!confirm(used ? `「${old}」有 ${used} 筆記錄。\n\n刪除後這些記錄還是「${_catEdit}」，只是變成不分小類，金額不受影響。\n\n確定要刪除？` : `確定刪除小類「${old}」？`)) return;
   list.splice(j,1); s.subcats[_catEdit] = list;
   DB.transactions.forEach(t=>{ if(t.cat===_catEdit && t.sub===old) delete t.sub; });
+  rentSubsReplace(_catEdit, old, '');
   save(); renderAll(); renderCatEditor();
+}
+// 租約、租務繳費記的小類也一起改（以後重建明細時才會一致）
+function rentSubsReplace(cat, old, nv){
+  const R = DB.rent || {}, cs = R.contracts || [];
+  cs.forEach(c=>{ if(c.cat===cat && c.sub===old) c.sub = nv; });
+  (R.payments || []).forEach(p=>{
+    const pc = p.cat || ((cs.find(c=>c.id===p.contractId) || {}).cat);
+    if(pc===cat && p.sub===old) p.sub = nv;
+  });
 }
 
 // ── 圖表：支出各類別明細（點一下展開小類）──
