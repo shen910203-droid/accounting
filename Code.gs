@@ -20,7 +20,7 @@
 //   restoreBackup()    還原到某一份備份（先改下面 RESTORE_ROW 的數字）
 //   resetToken()       換一組新的連線密碼，舊的立即失效
 // ════════════════════════════════════════════════════════════
-var BACKEND_VERSION = 'v3';
+var BACKEND_VERSION = 'v3.1';   // v3.1：提醒信拿掉「打開 App」按鈕（會開到 Safari，和主畫面 App 資料分開）
 var CHUNK = 40000;        // 每格存 4 萬字（Google 單格上限 5 萬）
 var KEEP_RECENT = 20;     // 最近 20 次存檔都保留
 var KEEP_DAYS = 90;       // 另外每天保留一份，共 90 天
@@ -263,13 +263,12 @@ function runCheck_(force) {
   var subject = items.length
     ? '【' + APP_NAME + '】' + md(T) + ' ' + items[0].title + (items.length > 1 ? ' 等 ' + items.length + ' 項' : '')
     : '【' + APP_NAME + '】測試信 · 目前沒有待辦';
-  var appUrl = db.settings && db.settings.appUrl || '';
-  MailApp.sendEmail({ to: to, name: APP_NAME, subject: subject, htmlBody: mailHtml_(items, T, appUrl, force) });
+  MailApp.sendEmail({ to: to, name: APP_NAME, subject: subject, htmlBody: mailHtml_(items, T, force) });
   if (!force) props.setProperty('LAST_SENT', tStr);
   return { sent: true, to: to, count: items.length };
 }
 
-function mailHtml_(items, T, appUrl, force) {
+function mailHtml_(items, T, force) {
   var colors = { overdue: '#ef4444', due: '#f59e0b', soon: '#7c6af7', end: '#14b8a6', bond: '#8b5cf6' };
   var tags = { overdue: '逾期', due: '今天繳費', soon: '即將到期', end: '租約即將到期', bond: '押金' };
   var body = '<p style="margin:0 0 16px;color:#64748b;font-size:13px">' + mdw(T) + (force ? ' · 測試寄送' : '') + '</p>';
@@ -280,13 +279,14 @@ function mailHtml_(items, T, appUrl, force) {
       '<div style="font-size:15px;font-weight:700;color:#0f172a">' + esc_(it.title) + '</div>' +
       '<div style="font-size:13px;color:#475569;margin-top:3px">' + esc_(it.detail) + '</div></div>';
   });
-  return mailWrap_(body, appUrl);
+  return mailWrap_(body);
 }
 
-function mailWrap_(inner, appUrl) {
+// 信裡不放「打開 App」的連結：iPhone 會用 Safari 開，和主畫面 App 的資料（PIN、連線密碼）是分開的
+function mailWrap_(inner) {
   return '<div style="font-family:-apple-system,\'PingFang TC\',\'Microsoft JhengHei\',sans-serif;max-width:520px;margin:0 auto;padding:8px">' +
     '<div style="font-size:18px;font-weight:800;color:#0f172a;margin:0 0 4px">💰 ' + APP_NAME + '</div>' + inner +
-    (appUrl ? '<p style="margin:18px 0 0"><a href="' + esc_(appUrl) + '" style="display:inline-block;background:#7c6af7;color:#fff;text-decoration:none;font-weight:700;padding:10px 18px;border-radius:10px">打開 ' + APP_NAME + '</a></p>' : '') +
+    '<p style="margin:18px 0 0;font-size:13px;color:#64748b">要記繳費，請從手機主畫面的 ' + APP_NAME + ' 打開。</p>' +
     '</div>';
 }
 
