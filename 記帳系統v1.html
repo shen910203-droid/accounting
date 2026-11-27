@@ -579,7 +579,7 @@ html.standalone .page{padding-top:calc(104px + var(--st))}
 <div id="pin-lock">
   <div class="pin-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.6 20.2 7.3v9.4L12 21.4 3.8 16.7V7.3z"/><path d="M14.4 9.2c-.5-.8-1.4-1.2-2.4-1.2-1.4 0-2.4.7-2.4 1.8 0 2.5 4.9 1.4 4.9 4 0 1.1-1 1.9-2.5 1.9-1.1 0-2-.4-2.6-1.3M12 6.6v1.4M12 15.7v1.5"/></svg></div>
   <div class="pin-title">Expense Manager</div>
-  <div class="pin-subtitle">v.Pro13.4 · TWD / AUD</div>
+  <div class="pin-subtitle">v.Pro13.5 · TWD / AUD</div>
   <div class="pin-label" id="pin-label">請輸入密碼</div>
   <div class="pin-dots" id="pin-dots">
     <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -606,7 +606,7 @@ html.standalone .page{padding-top:calc(104px + var(--st))}
 <header class="top">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.6 20.2 7.3v9.4L12 21.4 3.8 16.7V7.3z"/><path d="M14.4 9.2c-.5-.8-1.4-1.2-2.4-1.2-1.4 0-2.4.7-2.4 1.8 0 2.5 4.9 1.4 4.9 4 0 1.1-1 1.9-2.5 1.9-1.1 0-2-.4-2.6-1.3M12 6.6v1.4M12 15.7v1.5"/></svg></div>
-    <div><b>Expense Manager</b><small>v.Pro13.4 · TWD / AUD</small></div>
+    <div><b>Expense Manager</b><small>v.Pro13.5 · TWD / AUD</small></div>
   </div>
   <nav class="tabs">
     <button data-page="overview" class="on" onclick="showPage('overview')"><svg class="i" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>總覽</button>
@@ -4352,6 +4352,11 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleFit
 // _conflictOpen：衝突視窗等待回答時，不再上傳、也不再開第二個視窗
 var _ready = false, _conflictOpen = false, _lastLoadAt = 0;
 
+// 離線開啟：註冊 Service Worker（sw.js 和網頁放在同一個資料夾；本機 file:// 測試時不註冊）
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(e=>console.warn('離線功能註冊失敗：', e && e.message)); });
+}
+
 // 把使用者輸入的文字放進畫面前，轉成純文字（例如備註打「a<b」不會把後面吃掉）
 function escH(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -4359,7 +4364,9 @@ function escH(s){
 
 // 回到 App（解鎖後、或沒設 PIN 時回到前景）：這台沒有未上傳的變更，就抓雲端最新資料
 async function refreshFromCloud(){
-  if(!_ready || _saving || _conflictOpen || !getToken() || isDirty()) return;
+  if(!_ready || _saving || _conflictOpen || !getToken()) return;
+  // 沒網路時記的帳：回到 App 就補上傳（iPhone 不一定會發出「恢復網路」的通知）
+  if(isDirty()){ save(); return; }
   if(Date.now() - _lastLoadAt < 15000) return;          // 剛讀過就不重複讀
   _lastLoadAt = Date.now();
   let res;
